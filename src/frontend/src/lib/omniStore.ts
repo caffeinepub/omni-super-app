@@ -29,6 +29,57 @@ import {
   generateAnonymousID,
 } from "./mockData";
 
+function generateFreshDatingProfiles(): DatingProfile[] {
+  const emojis = ["🌙", "⚡", "🌊", "🔥", "💫", "🌸", "🦋", "⭐", "🎯", "🌈"];
+  const moods = [
+    "Mistik",
+    "Enerjik",
+    "Sakin",
+    "Tutkulu",
+    "Gizemli",
+    "Neşeli",
+    "Derin",
+    "Özgür",
+  ];
+  const vibes = [
+    "Derin Düşünceli",
+    "Maceraperest",
+    "Huzurlu",
+    "Yaratıcı",
+    "Özgün",
+    "Karizmatik",
+  ];
+  const interestSets = [
+    ["Müzik", "Sanat", "Teknoloji"],
+    ["Spor", "Seyahat", "Yemek"],
+    ["Kitap", "Doğa", "Meditasyon"],
+    ["Dans", "Sinema", "Teknoloji"],
+    ["Şiir", "Müzik", "Felsefe"],
+    ["Oyun", "Film", "Kod"],
+    ["Yoga", "Seyahat", "Fotoğraf"],
+    ["Müzik", "Spor", "Sanat"],
+  ];
+  return Array.from({ length: 6 }, (_, i) => ({
+    id: `dp_${Date.now()}_${i}`,
+    anonymousId: generateAnonymousID() as AnonymousID,
+    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+    mood: moods[Math.floor(Math.random() * moods.length)],
+    vibe: vibes[Math.floor(Math.random() * vibes.length)],
+    interests: interestSets[Math.floor(Math.random() * interestSets.length)],
+    distance: +(0.5 + Math.random() * 5).toFixed(1),
+    trustScore: +(3.5 + Math.random() * 1.5).toFixed(1),
+    isOnline: Math.random() > 0.3,
+    bio: [
+      "Şehrin sessiz köşelerini keşfediyorum...",
+      "Her gün yeni bir macera!",
+      "İç huzurun peşinde...",
+      "Yaratıcılık sınır tanımaz.",
+      "Kelimelerin gücüne inanıyorum.",
+      "Hayatı dolu dolu yaşıyorum.",
+    ][i % 6],
+  }));
+}
+
 export type RideState =
   | "REQUESTED"
   | "DRIVER_ASSIGNED"
@@ -326,6 +377,8 @@ interface OmniState {
   sendTokenGift: (matchId: string, amount: number) => void;
   setDatingActiveMatch: (id: string | null) => void;
 
+  refreshDatingProfiles: () => void;
+
   // Settings
   upgradeToPremium: () => void;
 }
@@ -351,7 +404,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       isPremium: false,
       isOnboarded: false,
 
-      activeModule: "home" as Module,
+      activeModule: "dating" as Module,
       setActiveModule: (m) => set({ activeModule: m }),
 
       completeOnboarding: (id, name) => {
@@ -365,7 +418,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       },
 
       // Chat
-      conversations: MOCK_CONVERSATIONS,
+      conversations: [],
       activeConversationId: null,
       setActiveConversation: (id) => set({ activeConversationId: id }),
 
@@ -490,7 +543,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       },
 
       // Social
-      stories: MOCK_STORIES,
+      stories: [],
       selectedInterests: [],
       setSelectedInterests: (interests) =>
         set({ selectedInterests: interests }),
@@ -748,7 +801,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
 
       // Wallet
       tokenBalance: 250,
-      transactions: MOCK_TRANSACTIONS,
+      transactions: [],
       claimedRewards: [],
 
       earnTokens: (amount, description) => {
@@ -787,7 +840,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
           id: `t${Date.now()}`,
           type: "transfer",
           amount: -amount,
-          description: `Gönderildi: ${targetId}`,
+          description: `${amount} OMNI → ${targetId} (simülasyon)`,
           timestamp: Date.now(),
         };
         set((s) => ({
@@ -966,9 +1019,9 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       },
 
       // Friends
-      friendRequests: MOCK_FRIEND_REQUESTS,
-      friends: MOCK_FRIENDS,
-      pulses: MOCK_PULSES,
+      friendRequests: [],
+      friends: [],
+      pulses: [],
 
       sendFriendRequest: (targetId, sharedInterests, pulseMatch) => {
         const state = get();
@@ -1038,7 +1091,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
 
       addFriendById: (targetId) => {
         const state = get();
-        if (targetId === state.myId) return "self";
+        if (state.myId !== null && targetId === state.myId) return "self";
         const alreadyFriend = state.friends.some(
           (f) => f.friendId === targetId,
         );
@@ -1257,6 +1310,11 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       },
 
       setDatingActiveMatch: (id) => set({ datingActiveMatchId: id }),
+
+      refreshDatingProfiles: () => {
+        set({ datingProfiles: generateFreshDatingProfiles() });
+        get().earnTokens(5, "Yeni profiller yüklendi: +5 OMNI");
+      },
 
       // Settings
       upgradeToPremium: () => {

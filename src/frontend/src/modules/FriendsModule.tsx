@@ -478,7 +478,9 @@ function AddByIdModal({
   const handleInput = (val: string) => {
     setInputId(val);
     // Auto-format: +777 XXXX XXXX
-    const digits = val.replace(/[^\d]/g, "");
+    const allDigits = val.replace(/[^\d]/g, "");
+    // Strip leading 777 prefix if user typed the full +777 ID
+    const digits = allDigits.startsWith("777") ? allDigits.slice(3) : allDigits;
     if (digits.length <= 11) {
       let f = "+777";
       if (digits.length > 0) f += ` ${digits.slice(0, 4)}`;

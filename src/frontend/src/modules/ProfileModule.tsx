@@ -1005,6 +1005,12 @@ export function ProfileModule() {
             <Zap size={12} />
             Token
           </GlassButton>
+          <GlassButton
+            data-ocid="profile.secondary_button"
+            onClick={() => setActiveModule("ride")}
+          >
+            🚗 Ride
+          </GlassButton>
         </div>
 
         {/* Sub-section shortcuts */}

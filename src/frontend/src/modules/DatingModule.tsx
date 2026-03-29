@@ -416,6 +416,7 @@ function DiscoverTab() {
     swipeProfile,
     setDatingActiveMatch,
     tokenBalance,
+    refreshDatingProfiles,
   } = useOmniStore();
   const [ghostMode, setGhostMode] = useState(false);
   const [newMatch, setNewMatch] = useState<DatingMatch | null>(null);
@@ -494,13 +495,25 @@ function DiscoverTab() {
             data-ocid="dating.empty_state"
             className="absolute inset-0 flex flex-col items-center justify-center gap-3"
           >
-            <div className="text-5xl">✨</div>
-            <p className="text-sm font-bold" style={{ color: "#A7ACBE" }}>
+            <div className="text-5xl mb-2">✨</div>
+            <p className="text-sm font-bold mb-1" style={{ color: "#A7ACBE" }}>
               Hepsi görüldü!
             </p>
-            <p className="text-xs" style={{ color: "#4A5568" }}>
-              Yeni profiller yakında eklenecek
+            <p className="text-xs mb-4" style={{ color: "#4A5568" }}>
+              Yeni profiller hazır
             </p>
+            <button
+              type="button"
+              onClick={refreshDatingProfiles}
+              className="px-6 py-2 rounded-full text-sm font-bold"
+              style={{
+                background: "rgba(255,79,123,0.15)",
+                border: "1px solid rgba(255,79,123,0.4)",
+                color: "#FF4F7B",
+              }}
+            >
+              🔄 Yeni Profiller Yükle
+            </button>
           </div>
         ) : (
           <div className="absolute inset-0">

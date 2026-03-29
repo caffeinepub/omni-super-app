@@ -1,5 +1,5 @@
 import type { PrivacyMode } from "@/lib/identitySystem";
-import { type Message, generateAnonymousID } from "@/lib/mockData";
+import { type Friend, type Message, generateAnonymousID } from "@/lib/mockData";
 import { useOmniStore } from "@/lib/omniStore";
 import {
   Bot,
@@ -297,6 +297,7 @@ export function ChatModule() {
     activeIdentityId,
     privacyMode,
     updatePrivacyMode,
+    friends,
   } = useOmniStore();
 
   const [input, setInput] = useState("");
@@ -306,9 +307,9 @@ export function ChatModule() {
   const [newChatId, setNewChatId] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
   const [isTempSession, setIsTempSession] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dms" | "groups" | "channels">(
-    "dms",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "dms" | "groups" | "channels" | "friends"
+  >("dms");
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [showMediaSheet, setShowMediaSheet] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -343,6 +344,10 @@ export function ChatModule() {
   );
   // Calls
   const [callState, setCallState] = useState<CallState | null>(null);
+  const [callFriendId, setCallFriendId] = useState<string | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
   const [callTimerInterval, setCallTimerInterval] = useState<ReturnType<
     typeof setInterval
   > | null>(null);
@@ -451,6 +456,7 @@ export function ChatModule() {
   }, [callState?.status]);
 
   const filteredConvs = conversations.filter((c) => {
+    if (activeTab === "friends") return false;
     if (activeTab === "dms") return !c.isGroup && !c.isChannel;
     if (activeTab === "groups") return c.isGroup;
     if (activeTab === "channels") return c.isChannel;
@@ -596,7 +602,8 @@ export function ChatModule() {
     setContextMenu(null);
   };
 
-  const startCall = (type: "voice" | "video") => {
+  const startCall = (type: "voice" | "video", friendId?: string) => {
+    if (friendId) setCallFriendId(friendId);
     setCallState({
       type,
       status: "ringing",
@@ -606,6 +613,21 @@ export function ChatModule() {
       videoOff: false,
       voiceMask: false,
     });
+    const constraints =
+      type === "video"
+        ? { video: true, audio: true }
+        : { video: false, audio: true };
+    navigator.mediaDevices
+      .getUserMedia(constraints)
+      .then((stream) => {
+        localStreamRef.current = stream;
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+      })
+      .catch(() => {
+        /* permission denied, continue without real media */
+      });
     setTimeout(
       () =>
         setCallState((prev) =>
@@ -617,6 +639,11 @@ export function ChatModule() {
 
   const endCall = () => {
     if (callTimerInterval) clearInterval(callTimerInterval);
+    if (localStreamRef.current) {
+      for (const t of localStreamRef.current.getTracks()) t.stop();
+      localStreamRef.current = null;
+    }
+    setCallFriendId(null);
     setCallState(null);
   };
 
@@ -855,12 +882,12 @@ export function ChatModule() {
             background: "rgba(14,19,32,0.7)",
           }}
         >
-          {(["dms", "groups", "channels"] as const).map((tab) => (
+          {(["dms", "groups", "channels", "friends"] as const).map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className="flex-1 py-2.5 text-xs font-semibold tracking-wide uppercase transition-colors"
+              className="flex-1 py-2 text-xs font-semibold tracking-wide uppercase transition-colors relative"
               style={{
                 color: activeTab === tab ? "#19E6FF" : "#4A5568",
                 borderBottom:
@@ -870,13 +897,186 @@ export function ChatModule() {
               }}
               data-ocid={`chat.${tab}.tab`}
             >
-              {tab === "dms" ? "DMs" : tab === "groups" ? "Groups" : "Channels"}
+              {tab === "dms" ? (
+                "DMs"
+              ) : tab === "groups" ? (
+                "Groups"
+              ) : tab === "channels" ? (
+                "Channels"
+              ) : (
+                <span className="flex items-center justify-center gap-1">
+                  Arkadaşlar
+                  {friends.length > 0 && (
+                    <span
+                      className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold"
+                      style={{ background: "#19E6FF", color: "#0A0F1E" }}
+                    >
+                      {friends.length}
+                    </span>
+                  )}
+                </span>
+              )}
             </button>
           ))}
         </div>
 
         <div className="flex-1 overflow-y-auto scrollbar-hide">
-          {filteredConvs.length === 0 ? (
+          {activeTab === "friends" ? (
+            friends.length === 0 ? (
+              <div
+                className="flex flex-col items-center justify-center h-full gap-3 px-6 text-center"
+                data-ocid="chat.friends.empty_state"
+              >
+                <div className="text-4xl mb-2">👥</div>
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: "#19E6FF" }}
+                >
+                  Henüz arkadaş eklemedin
+                </p>
+                <p className="text-xs" style={{ color: "#4A5568" }}>
+                  Arkadaş eklemek için Profil → Arkadaşlar modülüne git ve +777
+                  ID ile ekle
+                </p>
+              </div>
+            ) : (
+              <div>
+                {friends.map((friend: Friend, idx: number) => (
+                  <div
+                    key={friend.id}
+                    className="flex items-center gap-3 px-4 py-3 transition-colors"
+                    style={{ borderBottom: "1px solid #0E1320" }}
+                    data-ocid={`chat.friends.item.${idx + 1}`}
+                  >
+                    <div
+                      className="w-11 h-11 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0"
+                      style={{
+                        background:
+                          "linear-gradient(135deg,#19E6FF22,#19E6FF44)",
+                        color: "#19E6FF",
+                        border: "1px solid #19E6FF44",
+                      }}
+                    >
+                      {friend.friendId.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="text-sm font-semibold truncate"
+                          style={{ color: "#E2E8F0" }}
+                        >
+                          {friend.friendId}
+                        </span>
+                        <span
+                          className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0"
+                          style={{
+                            background: "rgba(25,230,255,0.1)",
+                            color: "#19E6FF",
+                            border: "1px solid rgba(25,230,255,0.2)",
+                          }}
+                        >
+                          {friend.friendScore} ⭐
+                        </span>
+                      </div>
+                      <p
+                        className="text-xs truncate mt-0.5"
+                        style={{ color: "#4A5568" }}
+                      >
+                        {friend.mood}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                        style={{
+                          background: "rgba(25,230,255,0.12)",
+                          color: "#19E6FF",
+                          border: "1px solid rgba(25,230,255,0.3)",
+                        }}
+                        data-ocid={`chat.friends.button.${idx + 1}`}
+                        title="Mesaj"
+                        onClick={() => {
+                          const existing = conversations.find(
+                            (c) =>
+                              !c.isGroup &&
+                              !c.isChannel &&
+                              c.participants.includes(friend.friendId),
+                          );
+                          if (existing) {
+                            setActiveConversation(existing.id);
+                            setActiveTab("dms");
+                          } else {
+                            const id = createConversation(friend.friendId);
+                            setActiveConversation(id);
+                            setActiveTab("dms");
+                          }
+                        }}
+                      >
+                        <Send size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                        style={{
+                          background: "rgba(47,245,199,0.12)",
+                          color: "#2FF5C7",
+                          border: "1px solid rgba(47,245,199,0.3)",
+                        }}
+                        data-ocid={`chat.friends.voice.${idx + 1}`}
+                        title="Sesli Arama"
+                        onClick={() => {
+                          const existing = conversations.find(
+                            (c) =>
+                              !c.isGroup &&
+                              !c.isChannel &&
+                              c.participants.includes(friend.friendId),
+                          );
+                          if (existing) {
+                            setActiveConversation(existing.id);
+                          } else {
+                            const id = createConversation(friend.friendId);
+                            setActiveConversation(id);
+                          }
+                          startCall("voice", friend.friendId);
+                        }}
+                      >
+                        <Phone size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                        style={{
+                          background: "rgba(181,107,255,0.12)",
+                          color: "#B56BFF",
+                          border: "1px solid rgba(181,107,255,0.3)",
+                        }}
+                        data-ocid={`chat.friends.video.${idx + 1}`}
+                        title="Görüntülü Arama"
+                        onClick={() => {
+                          const existing = conversations.find(
+                            (c) =>
+                              !c.isGroup &&
+                              !c.isChannel &&
+                              c.participants.includes(friend.friendId),
+                          );
+                          if (existing) {
+                            setActiveConversation(existing.id);
+                          } else {
+                            const id = createConversation(friend.friendId);
+                            setActiveConversation(id);
+                          }
+                          startCall("video", friend.friendId);
+                        }}
+                      >
+                        <Video size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : filteredConvs.length === 0 ? (
             <div
               className="flex flex-col items-center justify-center h-full gap-3"
               data-ocid="chat.empty_state"
@@ -2351,14 +2551,31 @@ export function ChatModule() {
           {callState.type === "video" &&
             callState.status === "connected" &&
             !callState.videoOff && (
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(135deg,rgba(181,107,255,0.15),rgba(25,230,255,0.05),rgba(6,7,11,0.9))",
-                  animation: "pulse 3s infinite",
-                }}
-              />
+              <>
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(135deg,rgba(181,107,255,0.15),rgba(25,230,255,0.05),rgba(6,7,11,0.9))",
+                    animation: "pulse 3s infinite",
+                  }}
+                />
+                {/* biome-ignore lint/a11y/useMediaCaption: live video stream */}
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover opacity-30"
+                />
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="absolute bottom-4 right-4 w-24 h-32 rounded-xl object-cover z-20"
+                  style={{ border: "2px solid rgba(25,230,255,0.5)" }}
+                />
+              </>
             )}
           <div className="relative z-10 flex flex-col items-center gap-4 text-center">
             <div
@@ -2368,11 +2585,11 @@ export function ChatModule() {
                 border: "3px solid rgba(25,230,255,0.3)",
               }}
             >
-              {title.charAt(0)}
+              {(callFriendId ?? title).charAt(0)}
             </div>
             <div>
               <p className="text-xl font-bold" style={{ color: "#F2F4FF" }}>
-                {title}
+                {callFriendId ?? title}
               </p>
               <p
                 className="text-sm mt-1"

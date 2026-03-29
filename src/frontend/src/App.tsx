@@ -8,7 +8,6 @@ import { ChatModule } from "@/modules/ChatModule";
 import { DatingModule } from "@/modules/DatingModule";
 import { EngineModule } from "@/modules/EngineModule";
 import { FriendsModule } from "@/modules/FriendsModule";
-import { HomeScreen } from "@/modules/HomeScreen";
 import { IdentityModule } from "@/modules/IdentityModule";
 import { MarketModule } from "@/modules/MarketModule";
 import { OnboardingScreen } from "@/modules/OnboardingScreen";
@@ -18,7 +17,6 @@ import SocialModule from "@/modules/SocialModule";
 import { WalletModule } from "@/modules/WalletModule";
 
 const MODULE_TITLES: Record<string, string> = {
-  home: "OMNI",
   chat: "MESSAGES",
   social: "SOCIAL",
   friends: "FRIENDS",
@@ -40,26 +38,6 @@ export default function App() {
       <ICPIdentityProvider>
         <div style={{ minHeight: "100vh" }}>
           <OnboardingScreen />
-          <Toaster theme="dark" />
-        </div>
-      </ICPIdentityProvider>
-    );
-  }
-
-  // HomeScreen is full-screen — no header/bottomnav overlay
-  if (activeModule === "home") {
-    return (
-      <ICPIdentityProvider>
-        <div
-          style={{
-            minHeight: "100vh",
-            background: "#0a0a0f",
-            position: "relative",
-          }}
-        >
-          <HomeScreen />
-          {/* Minimal bottom nav for switching away */}
-          <BottomNav />
           <Toaster theme="dark" />
         </div>
       </ICPIdentityProvider>
@@ -90,7 +68,7 @@ export default function App() {
             className="text-xs font-black tracking-[0.3em]"
             style={{ color: "#A7ACBE" }}
           >
-            {MODULE_TITLES[activeModule]}
+            {MODULE_TITLES[activeModule] ?? "OMNI"}
           </h1>
         </div>
 
@@ -113,6 +91,7 @@ export default function App() {
             {activeModule === "engine" && <EngineModule />}
             {activeModule === "identity" && <IdentityModule />}
             {activeModule === "dating" && <DatingModule />}
+            {activeModule === "home" && <DatingModule />}
             {activeModule === "profile" && <ProfileModule />}
           </div>
         </main>
