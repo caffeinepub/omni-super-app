@@ -1,0 +1,1133 @@
+import { useOmniStore } from "@/lib/omniStore";
+import {
+  Ghost,
+  Grid3X3,
+  Heart,
+  MessageCircle,
+  MoreHorizontal,
+  Play,
+  Share2,
+  ShoppingBag,
+  Star,
+  Users,
+  Video,
+  Zap,
+} from "lucide-react";
+import { useState } from "react";
+
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+
+const MOCK_POSTS = [
+  {
+    id: "p1",
+    type: "image" as const,
+    gradient: "linear-gradient(135deg, #1a0533 0%, #0d1f40 50%, #001a2c 100%)",
+    likes: 234,
+    caption: "Gece şehri 🌃",
+  },
+  {
+    id: "p2",
+    type: "video" as const,
+    gradient: "linear-gradient(135deg, #0d2b1a 0%, #031a2c 50%, #1a0d33 100%)",
+    likes: 512,
+    caption: "Şehir keşfi 🚗",
+  },
+  {
+    id: "p3",
+    type: "image" as const,
+    gradient: "linear-gradient(135deg, #1a1000 0%, #2a0a1a 50%, #001040 100%)",
+    likes: 89,
+    caption: "Sabah kahvesi ☕",
+  },
+  {
+    id: "p4",
+    type: "image" as const,
+    gradient: "linear-gradient(135deg, #001533 0%, #1a0020 50%, #0d1a00 100%)",
+    likes: 177,
+    caption: "Boğaz manzarası 🌉",
+  },
+  {
+    id: "p5",
+    type: "video" as const,
+    gradient: "linear-gradient(135deg, #0a0a1a 0%, #1a0533 50%, #001a1a 100%)",
+    likes: 891,
+    caption: "Sürüş vlogu 🎥",
+  },
+  {
+    id: "p6",
+    type: "image" as const,
+    gradient: "linear-gradient(135deg, #1a1a00 0%, #001a33 50%, #1a0030 100%)",
+    likes: 345,
+    caption: "Neon ışıklar ✨",
+  },
+];
+
+const MOCK_REELS = [
+  {
+    id: "r1",
+    gradient: "linear-gradient(180deg, #06070B 0%, #0d1030 40%, #1a0533 100%)",
+    caption: "Gece sürüşü — Boğaz köprüsünden geçiş 🌉",
+    mood: "🔥 Ateşli",
+    likes: 2847,
+    comments: 156,
+    username: "+777 3821 4490",
+    location: "İstanbul, TR",
+  },
+  {
+    id: "r2",
+    gradient: "linear-gradient(180deg, #06070B 0%, #001a2c 40%, #0d1a00 100%)",
+    caption: "Sabah jogging rutini 🏃 — Beşiktaş sahili",
+    mood: "⚡ Enerjik",
+    likes: 1203,
+    comments: 89,
+    username: "+777 3821 4490",
+    location: "Beşiktaş, İstanbul",
+  },
+];
+
+const MOCK_MARKET = [
+  {
+    id: "m1",
+    idValue: "+777 0001 0001",
+    rarity: "EFSANEVİ" as const,
+    price: 5000,
+    description: "Ultra nadir tekli rakam dizisi",
+    gradient: "linear-gradient(135deg, #1a0533 0%, #2d0066 100%)",
+    glowColor: "#B56BFF",
+  },
+  {
+    id: "m2",
+    idValue: "+777 1234 5678",
+    rarity: "EPİK" as const,
+    price: 1500,
+    description: "Sıralı rakam dizisi — koleksiyonluk",
+    gradient: "linear-gradient(135deg, #001a33 0%, #003366 100%)",
+    glowColor: "#19E6FF",
+  },
+  {
+    id: "m3",
+    idValue: "+777 7777 7777",
+    rarity: "NADİR" as const,
+    price: 800,
+    description: "Tam yedi dizisi — şans sayısı",
+    gradient: "linear-gradient(135deg, #1a1200 0%, #332200 100%)",
+    glowColor: "#FFB347",
+  },
+];
+
+const MOCK_RIDES = [
+  {
+    id: "ri1",
+    from: "Kadıköy Meydan",
+    to: "Levent Metro",
+    price: 87,
+    rating: 5,
+    date: "28 Mar 2026",
+    duration: "34 dk",
+    distanceKm: 12.4,
+  },
+  {
+    id: "ri2",
+    from: "Taksim Meydanı",
+    to: "Sabiha Gökçen",
+    price: 145,
+    rating: 4,
+    date: "25 Mar 2026",
+    duration: "52 dk",
+    distanceKm: 38.7,
+  },
+];
+
+const STAR_INDICES = [0, 1, 2, 3, 4] as const;
+
+const RARITY_STYLES = {
+  EFSANEVİ: { color: "#B56BFF", bg: "rgba(181,107,255,0.15)" },
+  EPİK: { color: "#19E6FF", bg: "rgba(25,230,255,0.12)" },
+  NADİR: { color: "#FFB347", bg: "rgba(255,179,71,0.12)" },
+};
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+function StatItem({
+  value,
+  label,
+  onClick,
+}: {
+  value: string;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all"
+      style={{ background: "transparent" }}
+    >
+      <span
+        className="text-lg font-black"
+        style={{ color: "#F0F4FF", letterSpacing: "-0.02em" }}
+      >
+        {value}
+      </span>
+      <span className="text-xs font-medium" style={{ color: "#4A5568" }}>
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function GlassButton({
+  children,
+  onClick,
+  primary,
+  "data-ocid": dataOcid,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  primary?: boolean;
+  "data-ocid"?: string;
+}) {
+  return (
+    <button
+      type="button"
+      data-ocid={dataOcid}
+      onClick={onClick}
+      className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+      style={{
+        background: primary
+          ? "linear-gradient(135deg, rgba(25,230,255,0.25) 0%, rgba(181,107,255,0.25) 100%)"
+          : "rgba(255,255,255,0.06)",
+        border: primary
+          ? "1px solid rgba(25,230,255,0.4)"
+          : "1px solid rgba(255,255,255,0.08)",
+        color: primary ? "#19E6FF" : "#A7ACBE",
+        boxShadow: primary ? "0 0 16px rgba(25,230,255,0.15)" : "none",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function PostGrid({
+  onSelect,
+}: {
+  onSelect: (idx: number) => void;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-0.5 px-0.5">
+      {MOCK_POSTS.map((post, idx) => (
+        <button
+          key={post.id}
+          type="button"
+          data-ocid={`profile.item.${idx + 1}`}
+          onClick={() => onSelect(idx)}
+          className="relative aspect-square overflow-hidden"
+          style={{ borderRadius: "4px" }}
+        >
+          <div
+            className="w-full h-full"
+            style={{ background: post.gradient }}
+          />
+          {post.type === "video" && (
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ background: "rgba(0,0,0,0.2)" }}
+            >
+              <Play size={20} style={{ color: "white" }} fill="white" />
+            </div>
+          )}
+          <div
+            className="absolute bottom-1 left-1 flex items-center gap-0.5"
+            style={{ color: "rgba(255,255,255,0.85)" }}
+          >
+            <Heart size={9} fill="white" />
+            <span className="text-[9px] font-semibold">{post.likes}</span>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ReelsView() {
+  const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const [currentReel, setCurrentReel] = useState(0);
+  const reel = MOCK_REELS[currentReel];
+
+  return (
+    <div
+      className="relative mx-2 rounded-2xl overflow-hidden"
+      style={{
+        height: "420px",
+        background: reel.gradient,
+        border: "1px solid rgba(25,230,255,0.1)",
+      }}
+    >
+      {/* Play area */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center"
+          style={{
+            background: "rgba(255,255,255,0.12)",
+            border: "2px solid rgba(255,255,255,0.3)",
+          }}
+        >
+          <Play size={28} style={{ color: "white" }} fill="white" />
+        </div>
+      </div>
+
+      {/* Bottom info overlay */}
+      <div
+        className="absolute bottom-0 left-0 right-12 p-4"
+        style={{
+          background: "linear-gradient(transparent, rgba(6,7,11,0.9))",
+        }}
+      >
+        <p className="text-xs font-semibold mb-1" style={{ color: "#19E6FF" }}>
+          {reel.username}
+        </p>
+        <p className="text-sm font-medium text-white mb-1 leading-snug">
+          {reel.caption}
+        </p>
+        <div className="flex items-center gap-3">
+          <span
+            className="text-xs px-2 py-0.5 rounded-full"
+            style={{
+              background: "rgba(255,255,255,0.1)",
+              color: "#A7ACBE",
+            }}
+          >
+            {reel.mood}
+          </span>
+          <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+            📍 {reel.location}
+          </span>
+        </div>
+      </div>
+
+      {/* Right actions */}
+      <div className="absolute right-2 bottom-16 flex flex-col gap-4 items-center">
+        <button
+          type="button"
+          data-ocid="profile.toggle"
+          onClick={() =>
+            setLiked((prev) => ({ ...prev, [reel.id]: !prev[reel.id] }))
+          }
+          className="flex flex-col items-center gap-0.5"
+        >
+          <Heart
+            size={22}
+            fill={liked[reel.id] ? "#FF4F6E" : "transparent"}
+            style={{ color: liked[reel.id] ? "#FF4F6E" : "white" }}
+          />
+          <span className="text-[10px] text-white">{reel.likes}</span>
+        </button>
+        <button type="button" className="flex flex-col items-center gap-0.5">
+          <MessageCircle size={22} style={{ color: "white" }} />
+          <span className="text-[10px] text-white">{reel.comments}</span>
+        </button>
+        <button type="button" className="flex flex-col items-center gap-0.5">
+          <Share2 size={22} style={{ color: "white" }} />
+          <span className="text-[10px] text-white">Paylaş</span>
+        </button>
+        <button type="button" className="flex flex-col items-center gap-0.5">
+          <Zap size={22} style={{ color: "#19E6FF" }} />
+          <span className="text-[10px]" style={{ color: "#19E6FF" }}>
+            Token
+          </span>
+        </button>
+      </div>
+
+      {/* Reel pagination */}
+      <div className="absolute top-3 left-0 right-0 flex justify-center gap-1.5">
+        {MOCK_REELS.map((r, i) => (
+          <button
+            key={r.id}
+            type="button"
+            onClick={() => setCurrentReel(i)}
+            className="h-0.5 rounded-full transition-all"
+            style={{
+              width: i === currentReel ? "20px" : "8px",
+              background:
+                i === currentReel ? "#19E6FF" : "rgba(255,255,255,0.3)",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MarketList() {
+  return (
+    <div className="px-2 flex flex-col gap-3">
+      {MOCK_MARKET.map((item, idx) => {
+        const style = RARITY_STYLES[item.rarity];
+        return (
+          <div
+            key={item.id}
+            data-ocid={`profile.item.${idx + 1}`}
+            className="rounded-2xl overflow-hidden p-4"
+            style={{
+              background: item.gradient,
+              border: `1px solid ${item.glowColor}33`,
+              boxShadow: `0 0 20px ${item.glowColor}22`,
+            }}
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full font-bold"
+                  style={{
+                    background: style.bg,
+                    color: style.color,
+                    border: `1px solid ${style.color}44`,
+                  }}
+                >
+                  {item.rarity}
+                </span>
+                <p
+                  className="text-base font-black mt-1.5"
+                  style={{ color: item.glowColor, fontFamily: "monospace" }}
+                >
+                  {item.idValue}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold" style={{ color: "#F0F4FF" }}>
+                  {item.price.toLocaleString()}
+                </p>
+                <p className="text-xs" style={{ color: "#4A5568" }}>
+                  OMNI
+                </p>
+              </div>
+            </div>
+            <p className="text-xs mb-3" style={{ color: "#A7ACBE" }}>
+              {item.description}
+            </p>
+            <button
+              type="button"
+              data-ocid={`profile.secondary_button.${idx + 1}`}
+              className="w-full py-2 rounded-xl text-xs font-bold transition-all"
+              style={{
+                background: `${item.glowColor}22`,
+                border: `1px solid ${item.glowColor}55`,
+                color: item.glowColor,
+              }}
+            >
+              Teklif Ver
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function RidesList() {
+  return (
+    <div className="px-2 flex flex-col gap-3">
+      {MOCK_RIDES.map((ride, idx) => (
+        <div
+          key={ride.id}
+          data-ocid={`profile.item.${idx + 1}`}
+          className="rounded-2xl p-4"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.07)",
+          }}
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: "#19E6FF" }}
+                />
+                <span
+                  className="text-xs font-medium"
+                  style={{ color: "#F0F4FF" }}
+                >
+                  {ride.from}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: "#B56BFF" }}
+                />
+                <span
+                  className="text-xs font-medium"
+                  style={{ color: "#F0F4FF" }}
+                >
+                  {ride.to}
+                </span>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-base font-black" style={{ color: "#19E6FF" }}>
+                ₺{ride.price}
+              </p>
+              <div className="flex items-center justify-end gap-0.5">
+                {STAR_INDICES.map((i) => (
+                  <Star
+                    key={`star-${i}`}
+                    size={9}
+                    fill={i < ride.rating ? "#FFB347" : "transparent"}
+                    style={{
+                      color: i < ride.rating ? "#FFB347" : "#2D3748",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          <div
+            className="flex items-center gap-3 text-[10px]"
+            style={{ color: "#4A5568" }}
+          >
+            <span>📅 {ride.date}</span>
+            <span>⏱ {ride.duration}</span>
+            <span>📍 {ride.distanceKm} km</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Post Viewer Modal ────────────────────────────────────────────────────────
+
+function PostViewer({
+  index,
+  onClose,
+}: {
+  index: number;
+  onClose: () => void;
+}) {
+  const [current, setCurrent] = useState(index);
+  const post = MOCK_POSTS[current];
+
+  return (
+    <div
+      data-ocid="profile.modal"
+      className="fixed inset-0 z-[100] flex flex-col"
+      style={{ background: "rgba(0,0,0,0.95)" }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3">
+        <button
+          type="button"
+          data-ocid="profile.close_button"
+          onClick={onClose}
+          className="text-white"
+        >
+          ✕
+        </button>
+        <span className="text-xs" style={{ color: "#4A5568" }}>
+          {current + 1} / {MOCK_POSTS.length}
+        </span>
+        <button type="button">
+          <MoreHorizontal size={20} style={{ color: "#A7ACBE" }} />
+        </button>
+      </div>
+
+      {/* Image */}
+      <div className="flex-1 flex items-center">
+        <div
+          className="w-full"
+          style={{
+            aspectRatio: "1",
+            background: post.gradient,
+          }}
+        />
+      </div>
+
+      {/* Actions */}
+      <div className="px-4 py-4">
+        <div className="flex items-center gap-5 mb-3">
+          <Heart size={24} style={{ color: "white" }} />
+          <MessageCircle size={24} style={{ color: "white" }} />
+          <Share2 size={24} style={{ color: "white" }} />
+        </div>
+        <p className="text-sm font-semibold text-white mb-0.5">
+          {post.likes} beğeni
+        </p>
+        <p className="text-sm text-white">{post.caption}</p>
+      </div>
+
+      {/* Prev / Next */}
+      <div className="flex justify-between px-4 pb-6">
+        <button
+          type="button"
+          data-ocid="profile.pagination_prev"
+          disabled={current === 0}
+          onClick={() => setCurrent((c) => Math.max(0, c - 1))}
+          className="px-6 py-2 rounded-xl text-sm font-semibold disabled:opacity-30"
+          style={{
+            background: "rgba(255,255,255,0.08)",
+            color: "white",
+          }}
+        >
+          ‹ Önceki
+        </button>
+        <button
+          type="button"
+          data-ocid="profile.pagination_next"
+          disabled={current === MOCK_POSTS.length - 1}
+          onClick={() =>
+            setCurrent((c) => Math.min(MOCK_POSTS.length - 1, c + 1))
+          }
+          className="px-6 py-2 rounded-xl text-sm font-semibold disabled:opacity-30"
+          style={{
+            background: "rgba(255,255,255,0.08)",
+            color: "white",
+          }}
+        >
+          Sonraki ›
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Profile Sub-Section Panel ────────────────────────────────────────────────
+
+type SubSection = "friends" | "match" | "identity" | "settings" | null;
+
+function SubSectionPanel({
+  section,
+  onClose,
+  myId,
+}: {
+  section: SubSection;
+  onClose: () => void;
+  myId: string;
+}) {
+  if (!section) return null;
+
+  const titles: Record<NonNullable<SubSection>, string> = {
+    friends: "👥 Arkadaşlar",
+    match: "🔥 Eşleşmeler",
+    identity: "🛡️ Kimlik",
+    settings: "⚙️ Ayarlar",
+  };
+
+  const content: Record<NonNullable<SubSection>, React.ReactNode> = {
+    friends: (
+      <div className="flex flex-col gap-2">
+        {["+777 9921 3304", "+777 5540 8812", "+777 2287 6631"].map((id, i) => (
+          <div
+            key={id}
+            className="flex items-center gap-3 p-3 rounded-xl"
+            style={{ background: "rgba(255,255,255,0.04)" }}
+          >
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-base"
+              style={{ background: "rgba(25,230,255,0.1)" }}
+            >
+              {["🌙", "⚡", "🌊"][i]}
+            </div>
+            <span className="text-sm font-mono" style={{ color: "#19E6FF" }}>
+              {id}
+            </span>
+            <span
+              className="ml-auto text-xs px-2 py-0.5 rounded-full"
+              style={{
+                background: "rgba(25,230,255,0.1)",
+                color: "#19E6FF",
+              }}
+            >
+              Online
+            </span>
+          </div>
+        ))}
+      </div>
+    ),
+    match: (
+      <div className="flex flex-col gap-2">
+        {[
+          { id: "+777 2847 3901", emoji: "🌙", mood: "Mistik" },
+          { id: "+777 5519 6628", emoji: "⚡", mood: "Enerjik" },
+        ].map((m, i) => (
+          <div
+            key={m.id}
+            className="flex items-center gap-3 p-3 rounded-xl"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(181,107,255,0.08), rgba(25,230,255,0.05))",
+              border: "1px solid rgba(181,107,255,0.15)",
+            }}
+          >
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+              style={{ background: "rgba(181,107,255,0.15)" }}
+            >
+              {m.emoji}
+            </div>
+            <div>
+              <p className="text-xs font-mono" style={{ color: "#A7ACBE" }}>
+                {m.id}
+              </p>
+              <p className="text-xs" style={{ color: "#B56BFF" }}>
+                {m.mood}
+              </p>
+            </div>
+            <button
+              type="button"
+              data-ocid={`profile.secondary_button.${i + 1}`}
+              className="ml-auto text-xs px-3 py-1.5 rounded-lg font-semibold"
+              style={{
+                background: "rgba(181,107,255,0.15)",
+                color: "#B56BFF",
+                border: "1px solid rgba(181,107,255,0.3)",
+              }}
+            >
+              Mesaj
+            </button>
+          </div>
+        ))}
+      </div>
+    ),
+    identity: (
+      <div className="flex flex-col gap-3">
+        <div
+          className="p-4 rounded-2xl"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(25,230,255,0.08), rgba(181,107,255,0.08))",
+            border: "1px solid rgba(25,230,255,0.2)",
+          }}
+        >
+          <p className="text-xs" style={{ color: "#4A5568" }}>
+            Aktif Kimlik
+          </p>
+          <p
+            className="text-lg font-black font-mono mt-1"
+            style={{ color: "#19E6FF" }}
+          >
+            {myId}
+          </p>
+          <div
+            className="mt-2 flex items-center gap-2 text-xs"
+            style={{ color: "#A7ACBE" }}
+          >
+            <span
+              className="px-2 py-0.5 rounded-full"
+              style={{
+                background: "rgba(25,230,255,0.1)",
+                color: "#19E6FF",
+              }}
+            >
+              ✓ Kalıcı
+            </span>
+            <span>ICP Bağlı</span>
+          </div>
+        </div>
+        <p className="text-xs text-center" style={{ color: "#4A5568" }}>
+          Kimlik Hub'a git → Kimlik sekmesini aç
+        </p>
+      </div>
+    ),
+    settings: (
+      <div className="flex flex-col gap-2">
+        {[
+          "🔔 Bildirimler",
+          "🎨 Görünüm",
+          "🔒 Gizlilik",
+          "💎 Premium",
+          "❓ Yardım",
+          "🚪 Çıkış",
+        ].map((item, i) => (
+          <button
+            key={item}
+            type="button"
+            data-ocid={`profile.secondary_button.${i + 1}`}
+            className="flex items-center gap-3 p-3 rounded-xl text-left w-full transition-all"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              color: "#F0F4FF",
+            }}
+          >
+            <span className="text-sm">{item}</span>
+          </button>
+        ))}
+      </div>
+    ),
+  };
+
+  return (
+    <div
+      data-ocid="profile.sheet"
+      className="fixed inset-x-0 bottom-0 z-[90] rounded-t-3xl"
+      style={{
+        background: "rgba(10,11,20,0.98)",
+        backdropFilter: "blur(24px)",
+        border: "1px solid rgba(25,230,255,0.12)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+        maxHeight: "70vh",
+        overflow: "auto",
+      }}
+    >
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <h3 className="text-sm font-bold text-white">{titles[section]}</h3>
+        <button
+          type="button"
+          data-ocid="profile.close_button"
+          onClick={onClose}
+          className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+          style={{
+            background: "rgba(255,255,255,0.08)",
+            color: "#A7ACBE",
+          }}
+        >
+          ✕
+        </button>
+      </div>
+      <div className="px-4 pb-6">{content[section]}</div>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export function ProfileModule() {
+  const { myId, displayName, tokenBalance, setActiveModule } = useOmniStore();
+
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "posts" | "videos" | "market" | "rides"
+  >("posts");
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [subSection, setSubSection] = useState<SubSection>(null);
+
+  const profileId = myId ?? "+777 3821 4490";
+  const name = displayName !== "Anonymous" ? displayName : null;
+
+  const TABS = [
+    { id: "posts" as const, label: "Gönderiler", icon: Grid3X3 },
+    { id: "videos" as const, label: "Videolar", icon: Video },
+    { id: "market" as const, label: "Market", icon: ShoppingBag },
+    { id: "rides" as const, label: "Sürüşler", icon: Star },
+  ];
+
+  return (
+    <div
+      data-ocid="profile.page"
+      className="h-full overflow-y-auto"
+      style={{
+        background: "linear-gradient(180deg, #06070B 0%, #09091A 100%)",
+      }}
+    >
+      {/* ── Header ── */}
+      <div
+        className="relative px-4 pt-4 pb-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(25,230,255,0.03) 0%, transparent 100%)",
+        }}
+      >
+        {/* Top actions */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            type="button"
+            data-ocid="profile.toggle"
+            onClick={() => setIsAnonymous((p) => !p)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all"
+            style={{
+              background: isAnonymous
+                ? "rgba(181,107,255,0.15)"
+                : "rgba(255,255,255,0.06)",
+              border: isAnonymous
+                ? "1px solid rgba(181,107,255,0.4)"
+                : "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            <Ghost
+              size={13}
+              style={{
+                color: isAnonymous ? "#B56BFF" : "#4A5568",
+              }}
+            />
+            <span
+              className="text-xs font-semibold"
+              style={{
+                color: isAnonymous ? "#B56BFF" : "#4A5568",
+              }}
+            >
+              {isAnonymous ? "Anonim" : "Görünür"}
+            </span>
+          </button>
+
+          <button type="button">
+            <MoreHorizontal size={20} style={{ color: "#4A5568" }} />
+          </button>
+        </div>
+
+        {/* Avatar + ID row */}
+        <div className="flex items-start gap-4 mb-4">
+          {/* Avatar */}
+          <div className="relative shrink-0">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center text-3xl"
+              style={{
+                background: "linear-gradient(135deg, #06070B 0%, #0B1020 100%)",
+                boxShadow:
+                  "0 0 0 2px rgba(6,7,11,1), 0 0 0 4px transparent, 0 0 24px rgba(25,230,255,0.4)",
+                border: "2px solid transparent",
+                backgroundClip: "padding-box",
+              }}
+            >
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: "linear-gradient(135deg, #19E6FF, #B56BFF)",
+                  padding: "2px",
+                  zIndex: -1,
+                  margin: "-2px",
+                }}
+              />
+              🌟
+            </div>
+            {/* Online dot */}
+            <div
+              className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full"
+              style={{
+                background: "#22C55E",
+                border: "2px solid #06070B",
+                boxShadow: "0 0 6px #22C55E",
+              }}
+            />
+          </div>
+
+          {/* Name / ID / Bio */}
+          <div className="flex-1 min-w-0">
+            {!isAnonymous && name && (
+              <p className="text-base font-bold text-white truncate mb-0.5">
+                {name}
+              </p>
+            )}
+            <p
+              className="text-sm font-mono font-bold"
+              style={{ color: "#19E6FF" }}
+            >
+              {profileId}
+            </p>
+            <p
+              className="text-xs mt-1 leading-snug"
+              style={{ color: "#A7ACBE" }}
+            >
+              {isAnonymous
+                ? "Anonim modda gizleniyor 👻"
+                : "Şehri gece gözlemliyorum. Kod yazıyorum, sürüş yapıyorum. 🌙"}
+            </p>
+
+            {/* Badges */}
+            <div className="flex items-center gap-2 mt-2">
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                style={{
+                  background: "rgba(25,230,255,0.1)",
+                  color: "#19E6FF",
+                  border: "1px solid rgba(25,230,255,0.2)",
+                }}
+              >
+                ✓ Güven 4.8
+              </span>
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                style={{
+                  background: "rgba(34,197,94,0.1)",
+                  color: "#22C55E",
+                  border: "1px solid rgba(34,197,94,0.2)",
+                }}
+              >
+                ● Online
+              </span>
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                style={{
+                  background: "rgba(181,107,255,0.1)",
+                  color: "#B56BFF",
+                  border: "1px solid rgba(181,107,255,0.2)",
+                }}
+              >
+                💎 {tokenBalance} OMNI
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div
+          className="flex items-center justify-around py-3 mb-3 rounded-2xl"
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          <StatItem value="47" label="Gönderi" />
+          <div
+            className="w-px h-8"
+            style={{ background: "rgba(255,255,255,0.06)" }}
+          />
+          <StatItem value="1.2K" label="Takipçi" />
+          <div
+            className="w-px h-8"
+            style={{ background: "rgba(255,255,255,0.06)" }}
+          />
+          <StatItem value="384" label="Takip" />
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 mb-3">
+          <GlassButton
+            primary
+            data-ocid="profile.primary_button"
+            onClick={() => {}}
+          >
+            <Users size={12} />
+            Takip Et
+          </GlassButton>
+          <GlassButton
+            data-ocid="profile.secondary_button"
+            onClick={() => setActiveModule("chat")}
+          >
+            <MessageCircle size={12} />
+            Mesaj
+          </GlassButton>
+          <GlassButton
+            data-ocid="profile.secondary_button"
+            onClick={() => setActiveModule("wallet")}
+          >
+            <Zap size={12} />
+            Token
+          </GlassButton>
+        </div>
+
+        {/* Sub-section shortcuts */}
+        <div className="flex items-center gap-2 pb-3">
+          {[
+            { id: "friends" as const, emoji: "👥", label: "Arkadaşlar" },
+            { id: "match" as const, emoji: "🔥", label: "Eşleşme" },
+            { id: "identity" as const, emoji: "🛡️", label: "Kimlik" },
+            { id: "settings" as const, emoji: "⚙️", label: "Ayarlar" },
+          ].map((item, idx) => (
+            <button
+              key={item.id}
+              type="button"
+              data-ocid={`profile.secondary_button.${idx + 1}`}
+              onClick={() => setSubSection(item.id)}
+              className="flex flex-col items-center gap-0.5 flex-1 py-2 rounded-xl transition-all"
+              style={{
+                background:
+                  subSection === item.id
+                    ? "rgba(25,230,255,0.08)"
+                    : "rgba(255,255,255,0.04)",
+                border:
+                  subSection === item.id
+                    ? "1px solid rgba(25,230,255,0.2)"
+                    : "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <span className="text-base">{item.emoji}</span>
+              <span
+                className="text-[9px] font-medium"
+                style={{
+                  color: subSection === item.id ? "#19E6FF" : "#4A5568",
+                }}
+              >
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Tabs ── */}
+      <div
+        className="sticky top-0 z-10 flex items-center gap-0 px-0"
+        style={{
+          background: "rgba(6,7,11,0.95)",
+          backdropFilter: "blur(16px)",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+        }}
+      >
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              data-ocid={`profile.${tab.id}.tab`}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex flex-col items-center gap-1 flex-1 py-3 relative transition-all"
+            >
+              <Icon
+                size={16}
+                style={{
+                  color: isActive ? "#19E6FF" : "#4A5568",
+                  filter: isActive
+                    ? "drop-shadow(0 0 6px rgba(25,230,255,0.6))"
+                    : "none",
+                }}
+              />
+              <span
+                className="text-[9px] font-semibold tracking-wide"
+                style={{ color: isActive ? "#19E6FF" : "#4A5568" }}
+              >
+                {tab.label.toUpperCase()}
+              </span>
+              {isActive && (
+                <div
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full"
+                  style={{
+                    width: "32px",
+                    background: "linear-gradient(90deg, #19E6FF, #B56BFF)",
+                    boxShadow: "0 0 8px #19E6FF",
+                  }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Tab Content ── */}
+      <div className="pt-3 pb-24">
+        {activeTab === "posts" && (
+          <PostGrid onSelect={(idx) => setViewerIndex(idx)} />
+        )}
+        {activeTab === "videos" && <ReelsView />}
+        {activeTab === "market" && <MarketList />}
+        {activeTab === "rides" && <RidesList />}
+      </div>
+
+      {/* ── Post Viewer Modal ── */}
+      {viewerIndex !== null && (
+        <PostViewer index={viewerIndex} onClose={() => setViewerIndex(null)} />
+      )}
+
+      {/* ── Sub-section Panel ── */}
+      {subSection && (
+        <>
+          <button
+            type="button"
+            aria-label="Kapat"
+            className="fixed inset-0 z-[85] cursor-default"
+            style={{ background: "rgba(0,0,0,0.5)" }}
+            onClick={() => setSubSection(null)}
+          />
+          <SubSectionPanel
+            section={subSection}
+            onClose={() => setSubSection(null)}
+            myId={profileId}
+          />
+        </>
+      )}
+    </div>
+  );
+}
