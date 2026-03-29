@@ -462,7 +462,7 @@ const _RANDOM_IDS: AnonymousID[] = [
 export const useOmniStore = create<OmniState & RuntimeState>()(
   persist(
     (set, get) => ({
-      myId: null,
+      myId: localStorage.getItem("omni-permanent-id") as AnonymousID | null,
       displayName: "Anonymous",
       isPremium: false,
       isOnboarded: false,

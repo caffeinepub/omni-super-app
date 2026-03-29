@@ -1,5 +1,7 @@
 import { useActor } from "@/hooks/useActor";
+import type { AnonymousID } from "@/lib/mockData";
 import { useOmniStore } from "@/lib/omniStore";
+import type { SocialPost, SocialReel } from "@/lib/omniStore";
 import {
   Ghost,
   Grid3X3,
@@ -89,8 +91,35 @@ function PostGrid({
 }: {
   onSelect: (idx: number) => void;
 }) {
-  const { socialPosts, myId, setActiveModule } = useOmniStore();
+  const { socialPosts, myId, addSocialPost, setActiveModule } = useOmniStore();
   const myPosts = socialPosts.filter((p) => p.authorId === (myId ?? ""));
+  const [desc, setDesc] = useState("");
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const resolvedId =
+      myId ?? localStorage.getItem("omni-permanent-id") ?? "+777 0000 0000";
+    addSocialPost({
+      id: `p${Date.now()}`,
+      authorId: resolvedId as AnonymousID,
+      authorEmoji: "🔮",
+      content: desc || "📷 Yeni fotoğraf",
+      mood: "📷",
+      privacy: "PUBLIC",
+      likes: 0,
+      comments: 0,
+      shares: 0,
+      time: "Şimdi",
+      liked: false,
+      mediaUrl: url,
+      mediaType: "image",
+    });
+    setDesc("");
+    e.target.value = "";
+    toast.success("Fotoğraf paylaşıldı! 📷");
+  };
 
   if (myPosts.length === 0) {
     return (
@@ -102,24 +131,75 @@ function PostGrid({
         <p className="text-xs" style={{ color: "#4A5568" }}>
           İlk fotoğrafını paylaş
         </p>
+        <input
+          type="text"
+          placeholder="Açıklama yaz..."
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
+          className="w-48 px-3 py-2 rounded-xl text-xs outline-none"
+          style={{
+            background: "rgba(25,230,255,0.08)",
+            color: "#fff",
+            border: "1px solid rgba(25,230,255,0.2)",
+          }}
+        />
+        <label
+          className="mt-2 px-5 py-2 rounded-xl text-xs font-bold cursor-pointer"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(25,230,255,0.25), rgba(189,0,255,0.25))",
+            color: "#19E6FF",
+            border: "1px solid rgba(25,230,255,0.4)",
+          }}
+          data-ocid="profile.upload_button"
+        >
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={handleImageUpload}
+          />
+          📷 Fotoğraf Ekle
+        </label>
         <button
           type="button"
           onClick={() => setActiveModule("social")}
-          className="mt-2 px-5 py-2 rounded-xl text-xs font-bold"
+          className="px-5 py-2 rounded-xl text-xs font-bold"
           style={{
-            background: "rgba(25,230,255,0.15)",
-            color: "#19E6FF",
-            border: "1px solid rgba(25,230,255,0.3)",
+            background: "rgba(25,230,255,0.08)",
+            color: "#888",
+            border: "1px solid rgba(255,255,255,0.1)",
           }}
           data-ocid="profile.post.button"
         >
-          Gönderi Paylaş
+          Sosyal Feed&apos;e Git
         </button>
       </div>
     );
   }
   return (
     <div className="grid grid-cols-3 gap-0.5 px-0.5">
+      {/* Upload button as first grid item */}
+      <label
+        className="relative aspect-square overflow-hidden flex flex-col items-center justify-center cursor-pointer"
+        style={{
+          borderRadius: "4px",
+          background: "rgba(25,230,255,0.08)",
+          border: "1px dashed rgba(25,230,255,0.3)",
+        }}
+        data-ocid="profile.upload_button"
+      >
+        <input
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={handleImageUpload}
+        />
+        <span className="text-xl">📷</span>
+        <span className="text-[9px] mt-1" style={{ color: "#19E6FF" }}>
+          Ekle
+        </span>
+      </label>
       {myPosts.map((post, idx) => (
         <button
           key={post.id}
@@ -173,11 +253,37 @@ function PostGrid({
 }
 
 function ReelsView() {
-  const { socialReels, myId, setActiveModule } = useOmniStore();
+  const { socialReels, myId, setActiveModule, addSocialReel } = useOmniStore();
   const myReels = socialReels.filter((r) => r.authorId === (myId ?? ""));
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [currentReel, setCurrentReel] = useState(0);
   const reel = myReels[currentReel];
+
+  const [reelDesc, setReelDesc] = useState("");
+
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const resolvedId =
+      myId ?? localStorage.getItem("omni-permanent-id") ?? "+777 0000 0000";
+    const newReel: SocialReel = {
+      id: `r${Date.now()}`,
+      authorId: resolvedId as AnonymousID,
+      authorEmoji: "🔮",
+      description: reelDesc || "🎬 Yeni video",
+      mood: "🎬",
+      gradient: `url(${url})`,
+      likes: 0,
+      comments: 0,
+      views: 0,
+      liked: false,
+    };
+    addSocialReel(newReel);
+    setReelDesc("");
+    e.target.value = "";
+    toast.success("Video paylaşıldı! 🎬");
+  };
 
   if (myReels.length === 0) {
     return (
@@ -189,18 +295,48 @@ function ReelsView() {
         <p className="text-xs text-center" style={{ color: "#4A5568" }}>
           İlk videonu paylaş ve keşfedilmeye başla
         </p>
+        <input
+          type="text"
+          placeholder="Video açıklaması..."
+          value={reelDesc}
+          onChange={(e) => setReelDesc(e.target.value)}
+          className="w-48 px-3 py-2 rounded-xl text-xs outline-none"
+          style={{
+            background: "rgba(189,0,255,0.08)",
+            color: "#fff",
+            border: "1px solid rgba(189,0,255,0.2)",
+          }}
+        />
+        <label
+          className="mt-2 px-5 py-2 rounded-xl text-xs font-bold cursor-pointer"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(189,0,255,0.25), rgba(25,230,255,0.25))",
+            color: "#BD00FF",
+            border: "1px solid rgba(189,0,255,0.4)",
+          }}
+          data-ocid="profile.upload_button"
+        >
+          <input
+            type="file"
+            accept="video/*"
+            hidden
+            onChange={handleVideoUpload}
+          />
+          🎬 Video Ekle
+        </label>
         <button
           type="button"
           onClick={() => setActiveModule("social")}
-          className="mt-2 px-5 py-2 rounded-xl text-xs font-bold"
+          className="px-5 py-2 rounded-xl text-xs font-bold"
           style={{
-            background: "rgba(25,230,255,0.15)",
-            color: "#19E6FF",
-            border: "1px solid rgba(25,230,255,0.3)",
+            background: "rgba(25,230,255,0.08)",
+            color: "#888",
+            border: "1px solid rgba(255,255,255,0.1)",
           }}
           data-ocid="profile.video.button"
         >
-          Video Paylaş
+          Sosyal Feed&apos;e Git
         </button>
       </div>
     );
@@ -848,7 +984,8 @@ export function ProfileModule() {
       .catch(() => {});
   }, [actor]);
 
-  const profileId = myId ?? "+777 3821 4490";
+  const profileId =
+    myId ?? localStorage.getItem("omni-permanent-id") ?? "+777 0000 0000";
   const name = displayName !== "Anonymous" ? displayName : null;
   const trustDisplay = ((userTrustScore ?? 80) / 20).toFixed(1);
   const myPostCount = socialPosts.filter(

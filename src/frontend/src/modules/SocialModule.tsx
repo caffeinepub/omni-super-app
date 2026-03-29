@@ -539,7 +539,10 @@ function FeedTab() {
     const { myId: storeMyId } = useOmniStore.getState();
     const newPost: Post = {
       id: `p${Date.now()}`,
-      authorId: storeMyId ?? "+777 0000 0001",
+      authorId:
+        storeMyId ??
+        localStorage.getItem("omni-permanent-id") ??
+        "+777 0000 0000",
       authorEmoji: "🔮",
       content: partial.content ?? "",
       mood: partial.mood ?? "🔥",
@@ -1295,7 +1298,11 @@ function ProfileTab() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const { tokenBalance } = useOmniStore();
 
-  const displayId = activeIdentity?.id ?? "+777 0000 0001";
+  const displayId =
+    activeIdentity?.id ??
+    useOmniStore.getState().myId ??
+    localStorage.getItem("omni-permanent-id") ??
+    "+777 0000 0000";
   const displayEmoji = activeIdentity?.emoji ?? "🔮";
   const displayName = activeIdentity?.nickname ?? "Anonim";
   const trust = 94;
