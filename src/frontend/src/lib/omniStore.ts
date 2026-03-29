@@ -529,7 +529,12 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
         if (existing) return existing.id;
         const newConv: Conversation = {
           id: `c${Date.now()}`,
-          participants: [...new Set([participantId, get().myId ?? "me"])],
+          participants: [
+            ...new Set([
+              participantId,
+              get().myId ?? localStorage.getItem("omni-permanent-id") ?? "me",
+            ]),
+          ],
           messages: [],
           isGroup: false,
           isChannel: false,
@@ -1364,7 +1369,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
     }),
     {
       name: "omni-store",
-      version: 5,
+      version: 6,
       migrate: (persistedState: unknown, fromVersion: number) => {
         const state = persistedState as Record<string, unknown>;
         if (fromVersion < 4) {
@@ -1420,6 +1425,16 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
           state.profileBio = "";
           state.followers = 0;
           state.following = 0;
+        }
+        if (fromVersion < 6) {
+          if (Array.isArray(state.conversations)) {
+            state.conversations = (
+              state.conversations as Array<{ participants?: string[] }>
+            ).filter(
+              (c: { participants?: string[] }) =>
+                !c.participants?.includes("me"),
+            );
+          }
         }
         // Always restore permanent ID if it exists
         const permanentId = localStorage.getItem("omni-permanent-id");

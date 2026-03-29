@@ -753,6 +753,29 @@ export function ChatModule() {
     );
   }
 
+  const handleAddFriend = () => {
+    const raw = addFriendInput.trim();
+    if (!raw) {
+      toast.error("Lütfen bir +777 ID girin");
+      return;
+    }
+    const digits = raw.replace(/^\+?777\s*/, "").replace(/\D/g, "");
+    if (digits.length !== 8) {
+      toast.error("Format: +777 XXXX XXXX (8 rakam gerekli)");
+      return;
+    }
+    const formatted = `+777 ${digits.slice(0, 4)} ${digits.slice(4)}` as string;
+    const result = addFriendById(formatted);
+    if (result === "added") {
+      toast.success(`${formatted} arkadaş listesine eklendi! ✅`);
+      setAddFriendInput("");
+    } else if (result === "already_friend") {
+      toast.error("Bu kişi zaten arkadaşın");
+    } else {
+      toast.error("Kendinizi ekleyemezsiniz");
+    }
+  };
+
   if (!activeConversationId) {
     return (
       <div className="flex flex-col h-full animate-fade-in">
@@ -860,28 +883,7 @@ export function ChatModule() {
                       color: "#F2F4FF",
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        const raw = addFriendInput.trim();
-                        const digits = raw
-                          .replace(/^\+?777\s*/, "")
-                          .replace(/\D/g, "");
-                        if (digits.length !== 8) {
-                          toast.error("Format: +777 XXXX XXXX (8 rakam)");
-                          return;
-                        }
-                        const formatted = `+777 ${digits.slice(0, 4)} ${digits.slice(4)}`;
-                        const result = addFriendById(
-                          formatted as import("@/lib/mockData").AnonymousID,
-                        );
-                        if (result === "added") {
-                          toast.success(
-                            `${formatted} arkadaş listesine eklendi! ✅`,
-                          );
-                          setAddFriendInput("");
-                        } else if (result === "already_friend")
-                          toast.error("Bu kişi zaten arkadaşın");
-                        else toast.error("Kendinizi ekleyemezsiniz");
-                      }
+                      if (e.key === "Enter") handleAddFriend();
                     }}
                   />
                   <button
@@ -893,28 +895,7 @@ export function ChatModule() {
                       color: "#19E6FF",
                       border: "1px solid rgba(25,230,255,0.3)",
                     }}
-                    onClick={() => {
-                      const raw = addFriendInput.trim();
-                      const digits = raw
-                        .replace(/^\+?777\s*/, "")
-                        .replace(/\D/g, "");
-                      if (digits.length !== 8) {
-                        toast.error("Format: +777 XXXX XXXX (8 rakam)");
-                        return;
-                      }
-                      const formatted = `+777 ${digits.slice(0, 4)} ${digits.slice(4)}`;
-                      const result = addFriendById(
-                        formatted as import("@/lib/mockData").AnonymousID,
-                      );
-                      if (result === "added") {
-                        toast.success(
-                          `${formatted} arkadaş listesine eklendi! ✅`,
-                        );
-                        setAddFriendInput("");
-                      } else if (result === "already_friend")
-                        toast.error("Bu kişi zaten arkadaşın");
-                      else toast.error("Kendinizi ekleyemezsiniz");
-                    }}
+                    onClick={handleAddFriend}
                   >
                     Ekle
                   </button>
@@ -1000,14 +981,12 @@ export function ChatModule() {
                                 !c.isChannel &&
                                 c.participants.includes(friend.friendId),
                             );
-                            if (existing) {
-                              setActiveConversation(existing.id);
-                              setActiveTab("dms");
-                            } else {
-                              const id = createConversation(friend.friendId);
-                              setActiveConversation(id);
-                              setActiveTab("dms");
-                            }
+                            const convId = existing
+                              ? existing.id
+                              : createConversation(friend.friendId);
+                            setTimeout(() => {
+                              setActiveConversation(convId);
+                            }, 0);
                           }}
                         >
                           <Send size={14} />
@@ -1398,7 +1377,12 @@ export function ChatModule() {
   }
 
   // ─── Chat Thread ─────────────────────────────────────────────────────────────
-  const title = activeConv?.name || activeConv?.participants[0] || "Unknown";
+  const otherParticipantId =
+    activeConv?.participants.find((p) => p !== myId && p !== "me") ??
+    activeConv?.participants[0];
+  const friendForConv = friends.find((f) => f.friendId === otherParticipantId);
+  const title =
+    activeConv?.name || friendForConv?.name || otherParticipantId || "Sohbet";
   const isOnlineConv = false;
 
   return (
