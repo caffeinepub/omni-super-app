@@ -33,13 +33,12 @@ import {
   Users,
   Video,
   VideoOff,
-  Volume2,
-  VolumeX,
   X,
   Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useWebRTC } from "../hooks/useWebRTC";
 
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts;
@@ -254,16 +253,6 @@ function StatusIcon({ status }: { status?: "sent" | "delivered" | "read" }) {
   return <CheckCheck size={11} style={{ color: "#19E6FF" }} />;
 }
 
-interface CallState {
-  type: "voice" | "video";
-  status: "ringing" | "connected";
-  duration: number;
-  muted: boolean;
-  speakerOn: boolean;
-  videoOff: boolean;
-  voiceMask: boolean;
-}
-
 interface AIMessage {
   id: string;
   role: "user" | "ai";
@@ -344,15 +333,8 @@ export function ChatModule() {
   const [linkSummaries, setLinkSummaries] = useState<Record<string, string>>(
     {},
   );
-  // Calls
-  const [callState, setCallState] = useState<CallState | null>(null);
-  const [callFriendId, setCallFriendId] = useState<string | null>(null);
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const callTimerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
-    null,
-  );
+  // Calls - WebRTC
+  const webrtc = useWebRTC(myId);
   // AI Assistant
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([
@@ -438,24 +420,6 @@ export function ChatModule() {
   useEffect(() => {
     aiEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [aiMessages]);
-
-  // Call timer
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
-  useEffect(() => {
-    if (callState?.status === "connected") {
-      const interval = setInterval(() => {
-        setCallState((prev) =>
-          prev ? { ...prev, duration: prev.duration + 1 } : null,
-        );
-      }, 1000);
-      callTimerIntervalRef.current = interval;
-      return () => clearInterval(interval);
-    }
-    if (callTimerIntervalRef.current) {
-      clearInterval(callTimerIntervalRef.current);
-      callTimerIntervalRef.current = null;
-    }
-  }, [callState?.status]);
 
   const filteredConvs = conversations.filter((c) => {
     if (activeTab === "friends") return false;
@@ -602,52 +566,6 @@ export function ChatModule() {
     addReaction(activeConversationId!, msgId, emoji, myId ?? "me");
     setReactionPickerMsgId(null);
     setContextMenu(null);
-  };
-
-  const startCall = (type: "voice" | "video", friendId?: string) => {
-    if (friendId) setCallFriendId(friendId);
-    setCallState({
-      type,
-      status: "ringing",
-      duration: 0,
-      muted: false,
-      speakerOn: true,
-      videoOff: false,
-      voiceMask: false,
-    });
-    const constraints =
-      type === "video"
-        ? { video: true, audio: true }
-        : { video: false, audio: true };
-    navigator.mediaDevices
-      .getUserMedia(constraints)
-      .then((stream) => {
-        localStreamRef.current = stream;
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-      })
-      .catch(() => {
-        /* permission denied, continue without real media */
-      });
-    setTimeout(
-      () =>
-        setCallState((prev) =>
-          prev ? { ...prev, status: "connected" } : null,
-        ),
-      2000,
-    );
-  };
-
-  const endCall = () => {
-    if (callTimerIntervalRef.current)
-      clearInterval(callTimerIntervalRef.current);
-    if (localStreamRef.current) {
-      for (const t of localStreamRef.current.getTracks()) t.stop();
-      localStreamRef.current = null;
-    }
-    setCallFriendId(null);
-    setCallState(null);
   };
 
   const formatCallDuration = (secs: number) => {
@@ -1117,7 +1035,7 @@ export function ChatModule() {
                               const id = createConversation(friend.friendId);
                               setActiveConversation(id);
                             }
-                            startCall("voice", friend.friendId);
+                            webrtc.initiateCall(friend.friendId, "voice");
                           }}
                         >
                           <Phone size={14} />
@@ -1145,7 +1063,7 @@ export function ChatModule() {
                               const id = createConversation(friend.friendId);
                               setActiveConversation(id);
                             }
-                            startCall("video", friend.friendId);
+                            webrtc.initiateCall(friend.friendId, "video");
                           }}
                         >
                           <Video size={14} />
@@ -1581,7 +1499,12 @@ export function ChatModule() {
             <>
               <button
                 type="button"
-                onClick={() => startCall("voice")}
+                onClick={() => {
+                  const friend = activeConv?.participants.find(
+                    (p) => p !== myId,
+                  );
+                  if (friend) webrtc.initiateCall(friend, "voice");
+                }}
                 className="p-1.5 rounded-lg"
                 style={{ background: "rgba(47,245,199,0.1)" }}
                 data-ocid="chat.button"
@@ -1591,7 +1514,12 @@ export function ChatModule() {
               </button>
               <button
                 type="button"
-                onClick={() => startCall("video")}
+                onClick={() => {
+                  const friend = activeConv?.participants.find(
+                    (p) => p !== myId,
+                  );
+                  if (friend) webrtc.initiateCall(friend, "video");
+                }}
                 className="p-1.5 rounded-lg"
                 style={{ background: "rgba(181,107,255,0.1)" }}
                 data-ocid="chat.button"
@@ -2756,21 +2684,85 @@ export function ChatModule() {
         </div>
       )}
 
+      {/* Incoming Call Overlay */}
+      {webrtc.incomingCall && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1001,
+            background: "rgba(0,0,0,0.92)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 24,
+          }}
+          data-ocid="chat.modal"
+        >
+          <div style={{ fontSize: 48 }}>
+            {webrtc.incomingCall.callType === "video" ? "📹" : "📞"}
+          </div>
+          <div style={{ color: "#fff", fontSize: 20, fontWeight: 700 }}>
+            {webrtc.incomingCall.fromId777}
+          </div>
+          <div style={{ color: "#A7ACBE", fontSize: 14 }}>
+            {webrtc.incomingCall.callType === "video"
+              ? "Görüntülü arama"
+              : "Sesli arama"}
+          </div>
+          <div style={{ display: "flex", gap: 32, marginTop: 16 }}>
+            <button
+              type="button"
+              onClick={webrtc.rejectCall}
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                background: "rgba(255,79,79,0.9)",
+                border: "none",
+                fontSize: 28,
+                cursor: "pointer",
+              }}
+              data-ocid="chat.cancel_button"
+            >
+              📵
+            </button>
+            <button
+              type="button"
+              onClick={webrtc.answerCall}
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                background: "rgba(47,245,199,0.9)",
+                border: "none",
+                fontSize: 28,
+                cursor: "pointer",
+              }}
+              data-ocid="chat.confirm_button"
+            >
+              ✅
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Call Modal */}
-      {callState && (
+      {webrtc.callState !== "idle" && (
         <div
           className="fixed inset-0 z-[100] flex flex-col items-center justify-between py-12 px-6"
           style={{
             background:
-              callState.type === "video"
+              webrtc.callType === "video"
                 ? "linear-gradient(180deg,#0A0610 0%,#06070B 100%)"
                 : "linear-gradient(180deg,#061520 0%,#06070B 100%)",
           }}
           data-ocid="chat.modal"
         >
-          {callState.type === "video" &&
-            callState.status === "connected" &&
-            !callState.videoOff && (
+          {webrtc.callType === "video" &&
+            webrtc.callState === "connected" &&
+            !webrtc.videoOff && (
               <>
                 <div
                   className="absolute inset-0"
@@ -2782,13 +2774,13 @@ export function ChatModule() {
                 />
                 {/* biome-ignore lint/a11y/useMediaCaption: live video stream */}
                 <video
-                  ref={remoteVideoRef}
+                  ref={webrtc.remoteVideoRef}
                   autoPlay
                   playsInline
                   className="absolute inset-0 w-full h-full object-cover opacity-30"
                 />
                 <video
-                  ref={localVideoRef}
+                  ref={webrtc.localVideoRef}
                   autoPlay
                   muted
                   playsInline
@@ -2805,38 +2797,25 @@ export function ChatModule() {
                 border: "3px solid rgba(25,230,255,0.3)",
               }}
             >
-              {(callFriendId ?? title).charAt(0)}
+              {(webrtc.remoteId777 ?? title).charAt(0)}
             </div>
             <div>
               <p className="text-xl font-bold" style={{ color: "#F2F4FF" }}>
-                {callFriendId ?? title}
+                {webrtc.remoteId777 ?? title}
               </p>
               <p
                 className="text-sm mt-1"
                 style={{
                   color:
-                    callState.status === "connected" ? "#2FF5C7" : "#A7ACBE",
+                    webrtc.callState === "connected" ? "#2FF5C7" : "#A7ACBE",
                 }}
               >
-                {callState.status === "ringing"
+                {webrtc.callState === "outgoing-ringing"
                   ? "Ringing..."
-                  : formatCallDuration(callState.duration)}
+                  : formatCallDuration(webrtc.duration)}
               </p>
-              {callState.voiceMask && (
-                <div
-                  className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
-                  style={{
-                    background: "rgba(181,107,255,0.2)",
-                    border: "1px solid rgba(181,107,255,0.4)",
-                  }}
-                >
-                  <span className="text-xs" style={{ color: "#B56BFF" }}>
-                    🎭 Voice Mask: ON
-                  </span>
-                </div>
-              )}
             </div>
-            {callState.type === "video" && callState.videoOff && (
+            {webrtc.callType === "video" && webrtc.videoOff && (
               <div
                 className="mt-2 px-3 py-1 rounded-full text-xs"
                 style={{
@@ -2851,7 +2830,7 @@ export function ChatModule() {
           </div>
 
           {/* Group call tiles (for group convs) */}
-          {activeConv?.isGroup && callState.status === "connected" && (
+          {activeConv?.isGroup && webrtc.callState === "connected" && (
             <div className="relative z-10 flex gap-3 flex-wrap justify-center">
               {activeConv.participants.slice(0, 4).map((p, i) => (
                 <div
@@ -2879,62 +2858,36 @@ export function ChatModule() {
           <div className="relative z-10 flex items-center gap-4">
             <button
               type="button"
-              onClick={() =>
-                setCallState((p) => (p ? { ...p, muted: !p.muted } : null))
-              }
+              onClick={webrtc.toggleMute}
               className="w-14 h-14 rounded-full flex items-center justify-center"
               style={{
-                background: callState.muted
+                background: webrtc.muted
                   ? "rgba(255,79,79,0.3)"
                   : "rgba(255,255,255,0.1)",
-                border: `1px solid ${callState.muted ? "rgba(255,79,79,0.5)" : "rgba(255,255,255,0.2)"}`,
+                border: `1px solid ${webrtc.muted ? "rgba(255,79,79,0.5)" : "rgba(255,255,255,0.2)"}`,
               }}
               data-ocid="chat.toggle"
             >
-              {callState.muted ? (
+              {webrtc.muted ? (
                 <MicOff size={20} style={{ color: "#FF4F4F" }} />
               ) : (
                 <Mic size={20} style={{ color: "#fff" }} />
               )}
             </button>
-            <button
-              type="button"
-              onClick={() =>
-                setCallState((p) =>
-                  p ? { ...p, speakerOn: !p.speakerOn } : null,
-                )
-              }
-              className="w-14 h-14 rounded-full flex items-center justify-center"
-              style={{
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}
-              data-ocid="chat.toggle"
-            >
-              {callState.speakerOn ? (
-                <Volume2 size={20} style={{ color: "#fff" }} />
-              ) : (
-                <VolumeX size={20} style={{ color: "#A7ACBE" }} />
-              )}
-            </button>
-            {callState.type === "video" && (
+            {webrtc.callType === "video" && (
               <button
                 type="button"
-                onClick={() =>
-                  setCallState((p) =>
-                    p ? { ...p, videoOff: !p.videoOff } : null,
-                  )
-                }
+                onClick={webrtc.toggleVideo}
                 className="w-14 h-14 rounded-full flex items-center justify-center"
                 style={{
-                  background: callState.videoOff
+                  background: webrtc.videoOff
                     ? "rgba(255,79,79,0.3)"
                     : "rgba(255,255,255,0.1)",
-                  border: `1px solid ${callState.videoOff ? "rgba(255,79,79,0.5)" : "rgba(255,255,255,0.2)"}`,
+                  border: `1px solid ${webrtc.videoOff ? "rgba(255,79,79,0.5)" : "rgba(255,255,255,0.2)"}`,
                 }}
                 data-ocid="chat.toggle"
               >
-                {callState.videoOff ? (
+                {webrtc.videoOff ? (
                   <VideoOff size={20} style={{ color: "#FF4F4F" }} />
                 ) : (
                   <Video size={20} style={{ color: "#fff" }} />
@@ -2943,25 +2896,7 @@ export function ChatModule() {
             )}
             <button
               type="button"
-              onClick={() =>
-                setCallState((p) =>
-                  p ? { ...p, voiceMask: !p.voiceMask } : null,
-                )
-              }
-              className="w-14 h-14 rounded-full flex items-center justify-center text-xl"
-              style={{
-                background: callState.voiceMask
-                  ? "rgba(181,107,255,0.3)"
-                  : "rgba(255,255,255,0.1)",
-                border: `1px solid ${callState.voiceMask ? "rgba(181,107,255,0.5)" : "rgba(255,255,255,0.2)"}`,
-              }}
-              data-ocid="chat.toggle"
-            >
-              🎭
-            </button>
-            <button
-              type="button"
-              onClick={endCall}
+              onClick={webrtc.hangUp}
               className="w-14 h-14 rounded-full flex items-center justify-center"
               style={{ background: "#FF4F4F" }}
               data-ocid="chat.delete_button"

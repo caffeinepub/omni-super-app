@@ -5,6 +5,7 @@ import Int "mo:core/Int";
 import Nat "mo:core/Nat";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
+import Array "mo:core/Array";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
@@ -19,6 +20,7 @@ actor {
   var nextTransactionId = 0;
   var id777ByPrincipal = Map.empty<Principal, Text>();
   var principalById777 = Map.empty<Text, Principal>();
+  var signalQueues = Map.empty<Text, [Text]>();
   let tokenAmount = 250;
 
   type Transaction = {
@@ -27,6 +29,13 @@ actor {
     to : Principal;
     amount : Nat;
     timestamp : Int;
+  };
+
+  func appendText(arr : [Text], item : Text) : [Text] {
+    let size = arr.size();
+    Array.tabulate<Text>(size + 1, func(i) {
+      if (i < size) { arr[i] } else { item }
+    });
   };
 
   public shared ({ caller }) func mintInitialTokens() : async Nat {
@@ -77,9 +86,8 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized");
     };
-    // Remove old mapping if exists
     switch (id777ByPrincipal.get(caller)) {
-      case (?oldId) { ignore principalById777.remove(oldId) };
+      case (?oldId) { principalById777.remove(oldId) };
       case (null) {};
     };
     id777ByPrincipal.add(caller, id777);
@@ -131,6 +139,29 @@ actor {
     transactions.values().filter(
       func(t) { t.from == caller or t.to == caller }
     ).toArray();
+  };
+
+  // WebRTC Signaling
+  public shared func sendSignal(toId777 : Text, signal : Text) : async () {
+    let existing = switch (signalQueues.get(toId777)) {
+      case (null) { [] };
+      case (?arr) { arr };
+    };
+    signalQueues.add(toId777, appendText(existing, signal));
+  };
+
+  public shared ({ caller }) func pollMySignals() : async [Text] {
+    switch (id777ByPrincipal.get(caller)) {
+      case (null) { [] };
+      case (?myId777) {
+        let signals = switch (signalQueues.get(myId777)) {
+          case (null) { [] };
+          case (?arr) { arr };
+        };
+        signalQueues.remove(myId777);
+        signals;
+      };
+    };
   };
 
   func getNextTransactionId() : Nat {

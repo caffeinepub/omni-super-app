@@ -32,4 +32,6 @@ export interface backendInterface {
     lookupPrincipalById777(id777: string): Promise<Principal | null>;
     lookupId777ByPrincipal(p: Principal): Promise<string | null>;
     transferById777(toId777: string, amount: bigint): Promise<bigint>;
+    sendSignal(toId777: string, signal: string): Promise<void>;
+    pollMySignals(): Promise<Array<string>>;
 }
