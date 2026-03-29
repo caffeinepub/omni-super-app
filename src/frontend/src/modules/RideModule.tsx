@@ -145,48 +145,14 @@ const PEAK_HOURS_HEIGHTS: { hour: number; height: number }[] = Array.from(
   },
 );
 
-const MOCK_RIDE_HISTORY = [
-  {
-    id: "+777 8821 3390",
-    dest: "Schiphol",
-    fare: isTurkey ? 195 : 28,
-    km: 18.2,
-    rating: 4.9,
-    time: "14:32",
-  },
-  {
-    id: "+777 2934 8821",
-    dest: "Centrum",
-    fare: isTurkey ? 85 : 12,
-    km: 5.1,
-    rating: 5.0,
-    time: "11:15",
-  },
-  {
-    id: "+777 7761 2204",
-    dest: "Vondelpark",
-    fare: isTurkey ? 65 : 9.5,
-    km: 3.8,
-    rating: 4.7,
-    time: "09:45",
-  },
-  {
-    id: "+777 3348 5509",
-    dest: "Leidseplein",
-    fare: isTurkey ? 105 : 15,
-    km: 7.2,
-    rating: 4.8,
-    time: "08:20",
-  },
-  {
-    id: "+777 9921 0018",
-    dest: "Amsterdam Noord",
-    fare: isTurkey ? 130 : 18.5,
-    km: 9.6,
-    rating: 5.0,
-    time: "07:55",
-  },
-];
+const MOCK_RIDE_HISTORY: Array<{
+  id: string;
+  dest: string;
+  fare: number;
+  km: number;
+  rating: number;
+  time: string;
+}> = [];
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -1550,33 +1516,48 @@ export default function RideModule() {
                 Son Sürüşler
               </p>
               <div className="space-y-1.5">
-                {MOCK_RIDE_HISTORY.map((ride, idx) => (
-                  <div
-                    key={`${ride.id}-${ride.time}`}
-                    className="flex items-center gap-2 bg-[#1a1a1a] border border-white/5 rounded-xl px-3 py-2"
-                    data-ocid={`ride.item.${idx + 1}`}
-                  >
-                    <Car size={12} className="text-[#00D4FF] flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-white truncate">{ride.id}</p>
-                      <p className="text-[10px] text-white/40">{ride.dest}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-xs font-bold text-white">
-                        {currency.symbol}
-                        {ride.fare}
-                      </p>
-                      <p className="text-[10px] text-white/40">{ride.km}km</p>
-                    </div>
-                    <div className="flex items-center gap-0.5 text-yellow-400 text-[10px] flex-shrink-0">
-                      <Star size={8} fill="currentColor" />
-                      {ride.rating}
-                    </div>
-                    <span className="text-[10px] text-white/30 flex-shrink-0">
-                      {ride.time}
-                    </span>
+                {MOCK_RIDE_HISTORY.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 gap-2">
+                    <span className="text-3xl">🚗</span>
+                    <p
+                      className="text-xs font-semibold"
+                      style={{ color: "#00D4FF" }}
+                    >
+                      Henüz sürüş yok
+                    </p>
+                    <p className="text-[10px]" style={{ color: "#4A5568" }}>
+                      İlk sürüşünden sonra burada görünecek
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  MOCK_RIDE_HISTORY.map((ride, idx) => (
+                    <div
+                      key={`${ride.id}-${ride.time}`}
+                      className="flex items-center gap-2 bg-[#1a1a1a] border border-white/5 rounded-xl px-3 py-2"
+                      data-ocid={`ride.item.${idx + 1}`}
+                    >
+                      <Car size={12} className="text-[#00D4FF] flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-white truncate">{ride.id}</p>
+                        <p className="text-[10px] text-white/40">{ride.dest}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs font-bold text-white">
+                          {currency.symbol}
+                          {ride.fare}
+                        </p>
+                        <p className="text-[10px] text-white/40">{ride.km}km</p>
+                      </div>
+                      <div className="flex items-center gap-0.5 text-yellow-400 text-[10px] flex-shrink-0">
+                        <Star size={8} fill="currentColor" />
+                        {ride.rating}
+                      </div>
+                      <span className="text-[10px] text-white/30 flex-shrink-0">
+                        {ride.time}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

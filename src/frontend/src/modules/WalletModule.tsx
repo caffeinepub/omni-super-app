@@ -106,32 +106,14 @@ const EARN_ACTIVITIES = [
   },
 ];
 
-const MOCK_DROPS = [
-  {
-    id: "drop1",
-    title: "Genç Kullanıcı Bonusu",
-    amount: 100,
-    claimedBy: 847,
-    expiresAt: Date.now() + 3600000 * 6,
-    icon: "🔥",
-  },
-  {
-    id: "drop2",
-    title: "Haftalık Özel Drop",
-    amount: 250,
-    claimedBy: 312,
-    expiresAt: Date.now() + 3600000 * 18,
-    icon: "⚡",
-  },
-  {
-    id: "drop3",
-    title: "Topluluk Ödülü",
-    amount: 50,
-    claimedBy: 2341,
-    expiresAt: Date.now() + 3600000 * 2,
-    icon: "🎁",
-  },
-];
+const MOCK_DROPS: Array<{
+  id: string;
+  title: string;
+  amount: number;
+  claimedBy: number;
+  expiresAt: number;
+  icon: string;
+}> = [];
 
 const RARITY_COLORS: Record<string, string> = {
   nadir: NEON_CYAN,
@@ -181,22 +163,21 @@ function WalletTab() {
   const [activeAction, setActiveAction] = useState<"main" | "send" | "receive">(
     "main",
   );
-  const [sendToId, setSendToId] = useState("");
+  const [recipientInput, setRecipientInput] = useState("");
   const [sendAmount, setSendAmount] = useState("");
-  const [recipientId777, setRecipientId777] = useState("");
-  const [useICP, setUseICP] = useState(false);
+  const [useICP, setUseICP] = useState(true);
 
   const handleSend = async () => {
     const amount = Number.parseInt(sendAmount);
     if (!amount || amount <= 0) return;
 
-    if (useICP && recipientId777.trim()) {
+    if (!recipientInput.trim()) return;
+    if (useICP) {
       // Real on-chain ICP transfer via +777 ID
       try {
-        await icpToken.transferByid777(recipientId777.trim(), BigInt(amount));
+        await icpToken.transferByid777(recipientInput.trim(), BigInt(amount));
         toast.success("✅ Transfer zincire kaydedildi!");
-        setSendToId("");
-        setRecipientId777("");
+        setRecipientInput("");
         setSendAmount("");
         setActiveAction("main");
       } catch (e) {
@@ -204,11 +185,10 @@ function WalletTab() {
       }
     } else {
       // Fallback: localStorage-based transfer
-      if (!sendToId.trim()) return;
-      const success = sendTokens(sendToId.trim(), amount);
+      const success = sendTokens(recipientInput.trim(), amount);
       if (success) {
         toast.success(`${amount} OMNI gönderildi!`);
-        setSendToId("");
+        setRecipientInput("");
         setSendAmount("");
         setActiveAction("main");
       } else {
@@ -432,39 +412,21 @@ function WalletTab() {
                 🔗 ICP Zincir
               </button>
             </div>
-            {useICP ? (
-              <input
-                data-ocid="wallet.recipient_id_input"
-                placeholder="+777 XXXX XXXX"
-                value={recipientId777}
-                onChange={(e) => setRecipientId777(e.target.value)}
-                style={{
-                  background: "#0a0f1a",
-                  border: `1px solid ${NEON_GREEN}33`,
-                  borderRadius: 8,
-                  padding: "8px 12px",
-                  color: "#fff",
-                  fontSize: 13,
-                  outline: "none",
-                }}
-              />
-            ) : (
-              <input
-                data-ocid="wallet.send_input"
-                placeholder="+777 XXXX XXXX"
-                value={sendToId}
-                onChange={(e) => setSendToId(e.target.value)}
-                style={{
-                  background: "#0a0f1a",
-                  border: `1px solid ${NEON_CYAN}33`,
-                  borderRadius: 8,
-                  padding: "8px 12px",
-                  color: "#fff",
-                  fontSize: 13,
-                  outline: "none",
-                }}
-              />
-            )}
+            <input
+              data-ocid="wallet.recipient_id_input"
+              placeholder="+777 XXXX XXXX"
+              value={recipientInput}
+              onChange={(e) => setRecipientInput(e.target.value)}
+              style={{
+                background: "#0a0f1a",
+                border: `1px solid ${useICP ? NEON_GREEN : NEON_CYAN}33`,
+                borderRadius: 8,
+                padding: "8px 12px",
+                color: "#fff",
+                fontSize: 13,
+                outline: "none",
+              }}
+            />
             <input
               data-ocid="wallet.amount_input"
               placeholder="Miktar (OMNI)"
@@ -2053,68 +2015,80 @@ function DropsTab() {
           <Flame size={12} style={{ color: NEON_RED }} /> SINIRLI DROPLAR
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {MOCK_DROPS.map((drop, idx) => {
-            const claimed = claimedDrops.includes(drop.id);
-            return (
-              <div
-                key={drop.id}
-                data-ocid={`drops.item.${idx + 1}`}
-                style={{
-                  background: "#0a0f1a",
-                  borderRadius: 10,
-                  padding: 12,
-                  border: `1px solid ${claimed ? "#1a2030" : `${NEON_RED}44`}`,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      marginBottom: 3,
-                    }}
-                  >
-                    <span style={{ fontSize: 16 }}>{drop.icon}</span>
-                    <span
+          {MOCK_DROPS.length === 0 ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                padding: "24px 0",
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 32 }}>🎁</span>
+              <p style={{ color: "#19E6FF", fontSize: 13, fontWeight: 600 }}>
+                Aktif drop yok
+              </p>
+              <p style={{ color: "#4A5568", fontSize: 11 }}>
+                Yeni droplar yakında gelecek
+              </p>
+            </div>
+          ) : (
+            MOCK_DROPS.map((drop, idx) => {
+              const claimed = claimedDrops.includes(drop.id);
+              return (
+                <div
+                  key={drop.id}
+                  data-ocid={`drops.item.${idx + 1}`}
+                  style={{
+                    background: "#0a0f1a",
+                    borderRadius: 10,
+                    padding: 12,
+                    border: `1px solid ${claimed ? "#1a2030" : `${NEON_RED}44`}`,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div
                       style={{
-                        color: claimed ? "#444" : "#ccc",
-                        fontSize: 12,
-                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        marginBottom: 3,
                       }}
                     >
-                      {drop.title}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      color: claimed ? "#333" : NEON_GREEN,
-                      fontSize: 13,
-                      fontWeight: 700,
-                    }}
-                  >
-                    +{drop.amount} OMNI
-                  </div>
-                  <div
-                    style={{
-                      color: "#444",
-                      fontSize: 10,
-                      marginTop: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <span
-                      style={{ display: "flex", alignItems: "center", gap: 2 }}
+                      <span style={{ fontSize: 16 }}>{drop.icon}</span>
+                      <span
+                        style={{
+                          color: claimed ? "#444" : "#ccc",
+                          fontSize: 12,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {drop.title}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        color: claimed ? "#333" : NEON_GREEN,
+                        fontSize: 13,
+                        fontWeight: 700,
+                      }}
                     >
-                      <Flame size={9} style={{ color: NEON_RED }} />
-                      {drop.claimedBy.toLocaleString()} kişi talep etti
-                    </span>
-                    {!claimed && (
+                      +{drop.amount} OMNI
+                    </div>
+                    <div
+                      style={{
+                        color: "#444",
+                        fontSize: 10,
+                        marginTop: 2,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
                       <span
                         style={{
                           display: "flex",
@@ -2122,37 +2096,49 @@ function DropsTab() {
                           gap: 2,
                         }}
                       >
-                        <Clock size={9} />
-                        {countdown[drop.id] ?? "..."}
+                        <Flame size={9} style={{ color: NEON_RED }} />
+                        {drop.claimedBy.toLocaleString()} kişi talep etti
                       </span>
-                    )}
+                      {!claimed && (
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2,
+                          }}
+                        >
+                          <Clock size={9} />
+                          {countdown[drop.id] ?? "..."}
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    data-ocid={`drops.primary_button.${idx + 1}`}
+                    disabled={claimed}
+                    onClick={() => {
+                      claimDrop(drop.id, drop.amount);
+                      toast.success(`+${drop.amount} OMNI cüzdana eklendi!`);
+                    }}
+                    style={{
+                      background: claimed ? "#1a2030" : `${NEON_RED}20`,
+                      border: `1px solid ${claimed ? "#222" : `${NEON_RED}66`}`,
+                      borderRadius: 8,
+                      padding: "7px 14px",
+                      color: claimed ? "#333" : NEON_RED,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: claimed ? "default" : "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {claimed ? "✓ Alındı" : "TALEP ET"}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  data-ocid={`drops.primary_button.${idx + 1}`}
-                  disabled={claimed}
-                  onClick={() => {
-                    claimDrop(drop.id, drop.amount);
-                    toast.success(`+${drop.amount} OMNI cüzdana eklendi!`);
-                  }}
-                  style={{
-                    background: claimed ? "#1a2030" : `${NEON_RED}20`,
-                    border: `1px solid ${claimed ? "#222" : `${NEON_RED}66`}`,
-                    borderRadius: 8,
-                    padding: "7px 14px",
-                    color: claimed ? "#333" : NEON_RED,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    cursor: claimed ? "default" : "pointer",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {claimed ? "✓ Alındı" : "TALEP ET"}
-                </button>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
 

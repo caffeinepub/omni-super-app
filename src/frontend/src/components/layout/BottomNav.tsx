@@ -62,7 +62,7 @@ export function BottomNav() {
           onClick={() => handleNav(item.module)}
           className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all"
           style={{
-            minWidth: "52px",
+            minWidth: "46px",
             background: isActive
               ? "linear-gradient(135deg, rgba(255,79,123,0.2), rgba(255,107,157,0.12))"
               : "rgba(255,79,123,0.07)",
@@ -112,9 +112,9 @@ export function BottomNav() {
         key={item.module}
         data-ocid={`nav.${item.module}.link`}
         onClick={() => handleNav(item.module)}
-        className="relative flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all"
+        className="relative flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-xl transition-all"
         style={{
-          minWidth: "40px",
+          minWidth: "34px",
           background: isActive
             ? isDating
               ? "rgba(255,79,123,0.07)"

@@ -113,6 +113,7 @@ export interface FriendRequest {
 export interface Friend {
   id: string;
   friendId: AnonymousID;
+  name?: string;
   addedAt: number;
   isPhantom: boolean;
   phantomExpiresAt?: number;

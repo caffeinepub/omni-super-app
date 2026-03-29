@@ -59,110 +59,32 @@ interface InlineChat {
 const DRAWER_COLLAPSED = 0.35;
 const DRAWER_EXPANDED = 0.85;
 
-const MOCK_CHATS = [
-  {
-    id: "c1",
-    name: "+777 3847 1920",
-    avatar: "🌙",
-    last: "Tamam, yoldayım!",
-    unread: 2,
-    time: "14:32",
-  },
-  {
-    id: "c2",
-    name: "+777 5519 6628",
-    avatar: "⚡",
-    last: "Token gönderdin mi?",
-    unread: 0,
-    time: "13:15",
-  },
-  {
-    id: "c3",
-    name: "+777 8834 1122",
-    avatar: "🌊",
-    last: "👍",
-    unread: 1,
-    time: "12:00",
-  },
-  {
-    id: "c4",
-    name: "+777 1107 4456",
-    avatar: "🔥",
-    last: "Sürüş nasıldı?",
-    unread: 0,
-    time: "11:44",
-  },
-  {
-    id: "c5",
-    name: "+777 7723 8890",
-    avatar: "💫",
-    last: "Görüşürüz!",
-    unread: 3,
-    time: "Dün",
-  },
-];
+const MOCK_CHATS: Array<{
+  id: string;
+  name: string;
+  avatar: string;
+  last: string;
+  unread: number;
+  time: string;
+}> = [];
 
-const MOCK_MARKET_ITEMS = [
-  {
-    id: "m1",
-    emoji: "🎵",
-    name: "Müzik Koleksiyonu",
-    price: 120,
-    seller: "+777 ****1920",
-    badge: "NADİR",
-  },
-  {
-    id: "m2",
-    emoji: "🎨",
-    name: "Dijital Sanat NFT",
-    price: 350,
-    seller: "+777 ****6628",
-    badge: "EPİK",
-  },
-  {
-    id: "m3",
-    emoji: "📱",
-    name: "Premium Uygulama",
-    price: 80,
-    seller: "+777 ****1122",
-    badge: null,
-  },
-  {
-    id: "m4",
-    emoji: "🔑",
-    name: "Özel Erişim Kodu",
-    price: 200,
-    seller: "+777 ****4456",
-    badge: "NADİR",
-  },
-];
+const MOCK_MARKET_ITEMS: Array<{
+  id: string;
+  emoji: string;
+  name: string;
+  price: number;
+  seller: string;
+  badge: string | null;
+}> = [];
 
-const MOCK_TRANSACTIONS = [
-  {
-    id: "t1",
-    type: "earn",
-    label: "Sürüş ödülü",
-    amount: "+50",
-    time: "Bugün 14:20",
-    color: "#00e5cc",
-  },
-  {
-    id: "t2",
-    type: "spend",
-    label: "Market alışveriş",
-    amount: "-120",
-    time: "Bugün 12:15",
-    color: "#ff4f4f",
-  },
-  {
-    id: "t3",
-    type: "earn",
-    label: "Arkadaş daveti",
-    amount: "+100",
-    time: "Dün 18:30",
-    color: "#00e5cc",
-  },
-];
+const MOCK_TRANSACTIONS: Array<{
+  id: string;
+  type: string;
+  label: string;
+  amount: string;
+  time: string;
+  color: string;
+}> = [];
 
 const QUICK_REPLIES = ["👍", "Yoldayım", "2 dk", "Tamam!", "Neredesin?"];
 
@@ -686,44 +608,56 @@ function ChatPanel({
 
   return (
     <div className="space-y-1">
-      {MOCK_CHATS.map((chat, i) => (
-        <button
-          key={chat.id}
-          type="button"
-          data-ocid={`chat.item.${i + 1}`}
-          onClick={() => onOpenChat(chat)}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all"
-          style={{ background: surf }}
-        >
-          <div
-            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-lg"
-            style={{ background: "rgba(0,229,204,0.1)" }}
+      {MOCK_CHATS.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-8 gap-2">
+          <span className="text-3xl">💬</span>
+          <p className="text-xs font-semibold" style={{ color: "#00e5cc" }}>
+            Henüz sohbet yok
+          </p>
+          <p className="text-[10px] text-center" style={{ color: "#4A5568" }}>
+            Chat modülünden arkadaş ekleyebilirsin
+          </p>
+        </div>
+      ) : (
+        MOCK_CHATS.map((chat, i) => (
+          <button
+            key={chat.id}
+            type="button"
+            data-ocid={`chat.item.${i + 1}`}
+            onClick={() => onOpenChat(chat)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all"
+            style={{ background: surf }}
           >
-            {chat.avatar}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-bold" style={{ color: txt }}>
-                {chat.name}
-              </span>
-              <span className="text-[10px]" style={{ color: muted }}>
-                {chat.time}
-              </span>
-            </div>
-            <div className="text-[11px] truncate" style={{ color: muted }}>
-              {chat.last}
-            </div>
-          </div>
-          {chat.unread > 0 && (
             <div
-              className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-              style={{ background: "#00e5cc", color: "#0a0a0f" }}
+              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-lg"
+              style={{ background: "rgba(0,229,204,0.1)" }}
             >
-              {chat.unread}
+              {chat.avatar}
             </div>
-          )}
-        </button>
-      ))}
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold" style={{ color: txt }}>
+                  {chat.name}
+                </span>
+                <span className="text-[10px]" style={{ color: muted }}>
+                  {chat.time}
+                </span>
+              </div>
+              <div className="text-[11px] truncate" style={{ color: muted }}>
+                {chat.last}
+              </div>
+            </div>
+            {chat.unread > 0 && (
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                style={{ background: "#00e5cc", color: "#0a0a0f" }}
+              >
+                {chat.unread}
+              </div>
+            )}
+          </button>
+        ))
+      )}
     </div>
   );
 }
@@ -802,26 +736,35 @@ function WalletPanel({
       </div>
 
       <div className="space-y-1">
-        {MOCK_TRANSACTIONS.map((tx, i) => (
-          <div
-            key={tx.id}
-            data-ocid={`wallet.transaction.item.${i + 1}`}
-            className="flex items-center justify-between px-3 py-2 rounded-xl"
-            style={{ background: surf }}
-          >
-            <div>
-              <div className="text-xs font-medium" style={{ color: txt }}>
-                {tx.label}
-              </div>
-              <div className="text-[10px]" style={{ color: muted }}>
-                {tx.time}
-              </div>
-            </div>
-            <div className="text-sm font-bold" style={{ color: tx.color }}>
-              {tx.amount} OMNI
-            </div>
+        {MOCK_TRANSACTIONS.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 gap-2">
+            <span className="text-3xl">💸</span>
+            <p className="text-xs font-semibold" style={{ color: "#00e5cc" }}>
+              Henüz işlem yok
+            </p>
           </div>
-        ))}
+        ) : (
+          MOCK_TRANSACTIONS.map((tx, i) => (
+            <div
+              key={tx.id}
+              data-ocid={`wallet.transaction.item.${i + 1}`}
+              className="flex items-center justify-between px-3 py-2 rounded-xl"
+              style={{ background: surf }}
+            >
+              <div>
+                <div className="text-xs font-medium" style={{ color: txt }}>
+                  {tx.label}
+                </div>
+                <div className="text-[10px]" style={{ color: muted }}>
+                  {tx.time}
+                </div>
+              </div>
+              <div className="text-sm font-bold" style={{ color: tx.color }}>
+                {tx.amount} OMNI
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -838,45 +781,54 @@ function MarketPanel({ isDark }: { isDark: boolean }) {
   return (
     <div className="space-y-3">
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {MOCK_MARKET_ITEMS.map((item, i) => (
-          <button
-            key={item.id}
-            type="button"
-            data-ocid={`market.item.${i + 1}`}
-            onClick={() => setSelectedItem(item)}
-            className="shrink-0 p-3 rounded-xl text-left"
-            style={{
-              background: surf,
-              minWidth: "120px",
-              border:
-                selectedItem?.id === item.id
-                  ? "1px solid rgba(0,229,204,0.4)"
-                  : "1px solid transparent",
-            }}
-          >
-            <div className="text-2xl mb-1">{item.emoji}</div>
-            <div className="text-[11px] font-bold" style={{ color: txt }}>
-              {item.name}
-            </div>
-            <div className="text-[10px] mt-1" style={{ color: "#00e5cc" }}>
-              {item.price} OMNI
-            </div>
-            {item.badge && (
-              <div
-                className="text-[8px] mt-1 px-1.5 py-0.5 rounded-full inline-block font-bold"
-                style={{
-                  background:
-                    item.badge === "EPİK"
-                      ? "rgba(139,92,246,0.2)"
-                      : "rgba(0,229,204,0.15)",
-                  color: item.badge === "EPİK" ? "#8b5cf6" : "#00e5cc",
-                }}
-              >
-                {item.badge}
+        {MOCK_MARKET_ITEMS.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 gap-2 w-full">
+            <span className="text-3xl">🛒</span>
+            <p className="text-xs font-semibold" style={{ color: "#00e5cc" }}>
+              Henüz ürün yok
+            </p>
+          </div>
+        ) : (
+          MOCK_MARKET_ITEMS.map((item, i) => (
+            <button
+              key={item.id}
+              type="button"
+              data-ocid={`market.item.${i + 1}`}
+              onClick={() => setSelectedItem(item)}
+              className="shrink-0 p-3 rounded-xl text-left"
+              style={{
+                background: surf,
+                minWidth: "120px",
+                border:
+                  selectedItem?.id === item.id
+                    ? "1px solid rgba(0,229,204,0.4)"
+                    : "1px solid transparent",
+              }}
+            >
+              <div className="text-2xl mb-1">{item.emoji}</div>
+              <div className="text-[11px] font-bold" style={{ color: txt }}>
+                {item.name}
               </div>
-            )}
-          </button>
-        ))}
+              <div className="text-[10px] mt-1" style={{ color: "#00e5cc" }}>
+                {item.price} OMNI
+              </div>
+              {item.badge && (
+                <div
+                  className="text-[8px] mt-1 px-1.5 py-0.5 rounded-full inline-block font-bold"
+                  style={{
+                    background:
+                      item.badge === "EPİK"
+                        ? "rgba(139,92,246,0.2)"
+                        : "rgba(0,229,204,0.15)",
+                    color: item.badge === "EPİK" ? "#8b5cf6" : "#00e5cc",
+                  }}
+                >
+                  {item.badge}
+                </div>
+              )}
+            </button>
+          ))
+        )}
       </div>
 
       {selectedItem && (

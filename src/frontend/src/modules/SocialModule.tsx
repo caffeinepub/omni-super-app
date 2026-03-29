@@ -78,225 +78,11 @@ interface NearbyUser {
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
-const INITIAL_STORIES: Story[] = [
-  {
-    id: "s1",
-    authorId: "+777 3842 9173",
-    authorEmoji: "🦊",
-    emoji: "🔥",
-    timeLeft: "4h left",
-    gradient: "linear-gradient(135deg, #FF6B35, #FF4F4F)",
-  },
-  {
-    id: "s2",
-    authorId: "+777 5521 0834",
-    authorEmoji: "🌊",
-    emoji: "😎",
-    timeLeft: "12h left",
-    gradient: "linear-gradient(135deg, #19E6FF, #4F8EFF)",
-  },
-  {
-    id: "s3",
-    authorId: "+777 7790 2265",
-    authorEmoji: "⚡",
-    emoji: "💔",
-    timeLeft: "2h left",
-    gradient: "linear-gradient(135deg, #B56BFF, #FF4F4F)",
-  },
-  {
-    id: "s4",
-    authorId: "+777 1138 6647",
-    authorEmoji: "🔮",
-    emoji: "🌙",
-    timeLeft: "8h left",
-    gradient: "linear-gradient(135deg, #2FF5C7, #19E6FF)",
-  },
-  {
-    id: "s5",
-    authorId: "+777 9903 4412",
-    authorEmoji: "🎭",
-    emoji: "⚡",
-    timeLeft: "22h left",
-    gradient: "linear-gradient(135deg, #FFD700, #FF8C00)",
-  },
-  {
-    id: "s6",
-    authorId: "+777 4456 8891",
-    authorEmoji: "🌸",
-    emoji: "🌸",
-    timeLeft: "1h left",
-    gradient: "linear-gradient(135deg, #FF85C2, #B56BFF)",
-  },
-];
+const INITIAL_STORIES: Story[] = [];
 
-const INITIAL_POSTS: Post[] = [
-  {
-    id: "p1",
-    authorId: "+777 3842 9173",
-    authorEmoji: "🦊",
-    content:
-      "İstanbul geceleri böyle güzel olur. Köprüden geçerken insan hayata dair her şeyi unutuyor 🌉✨",
-    mood: "🌙",
-    privacy: "PUBLIC",
-    likes: 247,
-    comments: 34,
-    shares: 12,
-    rideTag: true,
-    time: "2 dk",
-    liked: false,
-  },
-  {
-    id: "p2",
-    authorId: "+777 5521 0834",
-    authorEmoji: "🌊",
-    content:
-      "Yeni avatar açıldı! Gizlilik modu aktifken bile vibe'ı gizleyemiyorum 😎🔥",
-    mood: "🔥",
-    privacy: "ANON",
-    likes: 189,
-    comments: 21,
-    shares: 8,
-    time: "15 dk",
-    liked: false,
-  },
-  {
-    id: "p3",
-    authorId: "+777 7790 2265",
-    authorEmoji: "⚡",
-    content:
-      "P2P trade tamamlandı. 500 OMNI → nakite çevrildi. Escrow sistemi mükemmel çalıştı 💎",
-    mood: "⚡",
-    privacy: "FRIENDS",
-    likes: 312,
-    comments: 56,
-    shares: 23,
-    time: "1 sa",
-    liked: true,
-  },
-  {
-    id: "p4",
-    authorId: "+777 1138 6647",
-    authorEmoji: "🔮",
-    content:
-      "Shadow modunda bile insanları etkilemek mümkün. Anonymity güçtür 🌑",
-    mood: "😎",
-    privacy: "GHOST",
-    likes: 98,
-    comments: 7,
-    shares: 4,
-    time: "3 sa",
-    liked: false,
-  },
-  {
-    id: "p5",
-    authorId: "+777 9903 4412",
-    authorEmoji: "🎭",
-    content:
-      "Boğaz turu + sürücü arkadaş = mükemmel gün. OMNI Ride ile tanıştım bugün 🚗💫",
-    mood: "🔥",
-    privacy: "PUBLIC",
-    likes: 421,
-    comments: 67,
-    shares: 31,
-    rideTag: true,
-    time: "5 sa",
-    liked: false,
-  },
-  {
-    id: "p6",
-    authorId: "+777 4456 8891",
-    authorEmoji: "🌸",
-    content:
-      "Dating modülünden yeni bir match. 60 saniye içinde bağlantı kuruldu 💔✨",
-    mood: "💔",
-    privacy: "ANON",
-    likes: 156,
-    comments: 29,
-    shares: 9,
-    time: "8 sa",
-    liked: true,
-  },
-];
+const INITIAL_POSTS: Post[] = [];
 
-const INITIAL_REELS: Reel[] = [
-  {
-    id: "r1",
-    authorId: "+777 3842 9173",
-    authorEmoji: "🦊",
-    mood: "🔥",
-    description: "Gece sürüşü — kimse fark etmeden",
-    likes: 1247,
-    comments: 89,
-    views: 8432,
-    location: "📍 İstanbul ~2km",
-    rideTag: true,
-    gradient: "linear-gradient(160deg, #06070B 0%, #1A0A2E 50%, #2D0B4E 100%)",
-    liked: false,
-  },
-  {
-    id: "r2",
-    authorId: "+777 5521 0834",
-    authorEmoji: "🌊",
-    mood: "😎",
-    description: "Shadow modda kim olduğumu bilen var mı?",
-    likes: 892,
-    comments: 43,
-    views: 5621,
-    gradient: "linear-gradient(160deg, #06070B 0%, #0A1A2E 50%, #0B2E4E 100%)",
-    liked: false,
-  },
-  {
-    id: "r3",
-    authorId: "+777 7790 2265",
-    authorEmoji: "⚡",
-    mood: "⚡",
-    description: "500 OMNI kazandım bugün. Wallet dolu 💎",
-    likes: 2341,
-    comments: 156,
-    views: 15673,
-    location: "📍 Kadıköy ~5km",
-    gradient: "linear-gradient(160deg, #06070B 0%, #1A1A0A 50%, #2E2E0B 100%)",
-    liked: true,
-  },
-  {
-    id: "r4",
-    authorId: "+777 1138 6647",
-    authorEmoji: "🔮",
-    mood: "🌙",
-    description: "Gece yarısı düşünceler. Uyku yok 🌑",
-    likes: 673,
-    comments: 31,
-    views: 3892,
-    gradient: "linear-gradient(160deg, #06070B 0%, #0D0A2E 50%, #1A0D4E 100%)",
-    liked: false,
-  },
-  {
-    id: "r5",
-    authorId: "+777 9903 4412",
-    authorEmoji: "🎭",
-    mood: "💔",
-    description: "Anonim olmak bazen özgürleştirir",
-    likes: 1876,
-    comments: 112,
-    views: 12004,
-    location: "📍 Beşiktaş ~1km",
-    gradient: "linear-gradient(160deg, #06070B 0%, #2E0A0A 50%, #4E0B0B 100%)",
-    liked: false,
-  },
-  {
-    id: "r6",
-    authorId: "+777 4456 8891",
-    authorEmoji: "🌸",
-    mood: "🌸",
-    description: "Yeni gün, yeni kimlik. OMNI ile mümkün",
-    likes: 934,
-    comments: 58,
-    views: 6234,
-    rideTag: true,
-    gradient: "linear-gradient(160deg, #06070B 0%, #2E0A2E 50%, #4E0B4E 100%)",
-    liked: false,
-  },
-];
+const INITIAL_REELS: Reel[] = [];
 
 const NEARBY_USERS: NearbyUser[] = [
   {
@@ -902,206 +688,218 @@ function FeedTab() {
 
       {/* Posts */}
       <div className="flex flex-col gap-4 px-4 pb-6">
-        {posts.map((post) => {
-          const pc = privacyConfig[post.privacy];
-          return (
-            <motion.div
-              key={post.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl overflow-hidden"
-              style={{ background: "#151A26", border: "1px solid #2A3142" }}
-              data-ocid="feed.post.item"
-            >
-              {/* Header */}
-              <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+        {posts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <span className="text-5xl">✨</span>
+            <p className="text-base font-bold" style={{ color: "#19E6FF" }}>
+              Henüz gönderi yok
+            </p>
+            <p className="text-sm text-center" style={{ color: "#4A5568" }}>
+              İlk gönderini paylaş ve keşfedilmeye başla
+            </p>
+          </div>
+        ) : (
+          posts.map((post) => {
+            const pc = privacyConfig[post.privacy];
+            return (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl overflow-hidden"
+                style={{ background: "#151A26", border: "1px solid #2A3142" }}
+                data-ocid="feed.post.item"
+              >
+                {/* Header */}
+                <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+                    style={{ background: "#1E2436" }}
+                  >
+                    {post.authorEmoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#19E6FF] text-xs font-mono truncate">
+                        {post.authorId}
+                      </span>
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full font-bold"
+                        style={{
+                          background: `${pc.color}22`,
+                          color: pc.color,
+                          border: `1px solid ${pc.color}44`,
+                        }}
+                      >
+                        {pc.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {post.rideTag && (
+                        <span
+                          className="text-xs flex items-center gap-1"
+                          style={{ color: "#2FF5C7" }}
+                        >
+                          <Car size={10} />
+                          Seyahat sırasında
+                        </span>
+                      )}
+                      <span className="text-[#A7ACBE] text-xs">
+                        {post.time} önce
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xl">{post.mood}</span>
+                </div>
+
+                {/* Content */}
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+                  className="mx-4 mb-3 p-4 rounded-xl"
                   style={{ background: "#1E2436" }}
                 >
-                  {post.authorEmoji}
+                  <p className="text-[#F2F4FF] text-sm leading-relaxed">
+                    {post.content}
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#19E6FF] text-xs font-mono truncate">
-                      {post.authorId}
-                    </span>
-                    <span
-                      className="text-xs px-2 py-0.5 rounded-full font-bold"
-                      style={{
-                        background: `${pc.color}22`,
-                        color: pc.color,
-                        border: `1px solid ${pc.color}44`,
-                      }}
-                    >
-                      {pc.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {post.rideTag && (
-                      <span
-                        className="text-xs flex items-center gap-1"
-                        style={{ color: "#2FF5C7" }}
-                      >
-                        <Car size={10} />
-                        Seyahat sırasında
-                      </span>
-                    )}
-                    <span className="text-[#A7ACBE] text-xs">
-                      {post.time} önce
-                    </span>
-                  </div>
-                </div>
-                <span className="text-xl">{post.mood}</span>
-              </div>
 
-              {/* Content */}
-              <div
-                className="mx-4 mb-3 p-4 rounded-xl"
-                style={{ background: "#1E2436" }}
-              >
-                <p className="text-[#F2F4FF] text-sm leading-relaxed">
-                  {post.content}
-                </p>
-              </div>
-
-              {/* Media */}
-              {post.mediaUrl && (
-                <div className="mx-4 mb-3 rounded-xl overflow-hidden">
-                  {post.mediaType === "video" ? (
-                    <video
-                      src={post.mediaUrl}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      className="w-full rounded-xl max-h-72 object-cover"
-                    />
-                  ) : (
-                    <img
-                      src={post.mediaUrl}
-                      alt="post media"
-                      className="w-full rounded-xl object-cover max-h-72"
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* Stats */}
-              <div className="flex items-center gap-4 px-4 pb-2 text-[#A7ACBE] text-xs">
-                <span>❤️ {formatCount(post.likes)}</span>
-                <span>💬 {post.comments}</span>
-                <span>🔁 {post.shares}</span>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-1 px-3 pb-4">
-                <button
-                  type="button"
-                  onClick={() => toggleLike(post.id)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
-                  style={{
-                    background: post.liked ? "#FF4F4F22" : "#1E2436",
-                    color: post.liked ? "#FF4F4F" : "#A7ACBE",
-                  }}
-                  data-ocid="feed.post.like_button"
-                >
-                  <Heart size={14} fill={post.liked ? "#FF4F4F" : "none"} />
-                  Beğen
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCommentOpen(commentOpen === post.id ? null : post.id)
-                  }
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
-                  style={{ background: "#1E2436", color: "#A7ACBE" }}
-                  data-ocid="feed.post.comment_button"
-                >
-                  <MessageCircle size={14} />
-                  Yorum
-                </button>
-                <button
-                  type="button"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold"
-                  style={{ background: "#1E2436", color: "#A7ACBE" }}
-                  data-ocid="feed.post.share_button"
-                >
-                  <Share2 size={14} />
-                  Paylaş
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveModule("chat")}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:border-cyan-400"
-                  style={{
-                    background: "#1E2436",
-                    color: "#19E6FF",
-                    border: "1px solid #19E6FF33",
-                  }}
-                  data-ocid="feed.post.dm_button"
-                >
-                  <MessageCircle size={14} />
-                  DM
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTipTarget(post.authorId)}
-                  className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold"
-                  style={{
-                    background: "#B56BFF22",
-                    color: "#B56BFF",
-                    border: "1px solid #B56BFF44",
-                  }}
-                  data-ocid="feed.post.tip_button"
-                >
-                  <Coins size={14} />
-                  Tip
-                </button>
-              </div>
-
-              {/* Comment input */}
-              <AnimatePresence>
-                {commentOpen === post.id && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="px-4 pb-4 overflow-hidden"
-                  >
-                    <div className="flex gap-2">
-                      <input
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        placeholder="Yorumunu yaz..."
-                        className="flex-1 rounded-xl px-3 py-2 text-xs outline-none"
-                        style={{
-                          background: "#1E2436",
-                          border: "1px solid #2A3142",
-                          color: "#F2F4FF",
-                        }}
-                        data-ocid="feed.post.comment_input"
+                {/* Media */}
+                {post.mediaUrl && (
+                  <div className="mx-4 mb-3 rounded-xl overflow-hidden">
+                    {post.mediaType === "video" ? (
+                      <video
+                        src={post.mediaUrl}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="w-full rounded-xl max-h-72 object-cover"
                       />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          toast.success("Yorum eklendi!");
-                          setCommentText("");
-                          setCommentOpen(null);
-                        }}
-                        className="px-3 py-2 rounded-xl text-xs font-bold"
-                        style={{ background: "#19E6FF", color: "#06070B" }}
-                        data-ocid="feed.post.comment_submit"
-                      >
-                        Gönder
-                      </button>
-                    </div>
-                  </motion.div>
+                    ) : (
+                      <img
+                        src={post.mediaUrl}
+                        alt="post media"
+                        className="w-full rounded-xl object-cover max-h-72"
+                      />
+                    )}
+                  </div>
                 )}
-              </AnimatePresence>
-            </motion.div>
-          );
-        })}
+
+                {/* Stats */}
+                <div className="flex items-center gap-4 px-4 pb-2 text-[#A7ACBE] text-xs">
+                  <span>❤️ {formatCount(post.likes)}</span>
+                  <span>💬 {post.comments}</span>
+                  <span>🔁 {post.shares}</span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 px-3 pb-4">
+                  <button
+                    type="button"
+                    onClick={() => toggleLike(post.id)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+                    style={{
+                      background: post.liked ? "#FF4F4F22" : "#1E2436",
+                      color: post.liked ? "#FF4F4F" : "#A7ACBE",
+                    }}
+                    data-ocid="feed.post.like_button"
+                  >
+                    <Heart size={14} fill={post.liked ? "#FF4F4F" : "none"} />
+                    Beğen
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCommentOpen(commentOpen === post.id ? null : post.id)
+                    }
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+                    style={{ background: "#1E2436", color: "#A7ACBE" }}
+                    data-ocid="feed.post.comment_button"
+                  >
+                    <MessageCircle size={14} />
+                    Yorum
+                  </button>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold"
+                    style={{ background: "#1E2436", color: "#A7ACBE" }}
+                    data-ocid="feed.post.share_button"
+                  >
+                    <Share2 size={14} />
+                    Paylaş
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveModule("chat")}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:border-cyan-400"
+                    style={{
+                      background: "#1E2436",
+                      color: "#19E6FF",
+                      border: "1px solid #19E6FF33",
+                    }}
+                    data-ocid="feed.post.dm_button"
+                  >
+                    <MessageCircle size={14} />
+                    DM
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTipTarget(post.authorId)}
+                    className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold"
+                    style={{
+                      background: "#B56BFF22",
+                      color: "#B56BFF",
+                      border: "1px solid #B56BFF44",
+                    }}
+                    data-ocid="feed.post.tip_button"
+                  >
+                    <Coins size={14} />
+                    Tip
+                  </button>
+                </div>
+
+                {/* Comment input */}
+                <AnimatePresence>
+                  {commentOpen === post.id && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="px-4 pb-4 overflow-hidden"
+                    >
+                      <div className="flex gap-2">
+                        <input
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          placeholder="Yorumunu yaz..."
+                          className="flex-1 rounded-xl px-3 py-2 text-xs outline-none"
+                          style={{
+                            background: "#1E2436",
+                            border: "1px solid #2A3142",
+                            color: "#F2F4FF",
+                          }}
+                          data-ocid="feed.post.comment_input"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            toast.success("Yorum eklendi!");
+                            setCommentText("");
+                            setCommentOpen(null);
+                          }}
+                          className="px-3 py-2 rounded-xl text-xs font-bold"
+                          style={{ background: "#19E6FF", color: "#06070B" }}
+                          data-ocid="feed.post.comment_submit"
+                        >
+                          Gönder
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })
+        )}
       </div>
 
       {/* FAB */}
@@ -1184,179 +982,194 @@ function ReelsTab() {
       }}
       data-ocid="reels.list"
     >
-      {reels.map((reel, i) => (
-        <div
-          key={reel.id}
-          className="relative flex-shrink-0"
-          style={{
-            height: "100%",
-            scrollSnapAlign: "start",
-            background: reel.gradient,
-          }}
-          data-ocid={`reels.item.${i + 1}`}
-        >
-          {/* Progress bar */}
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-white/20">
-            <motion.div
-              className="h-full bg-white"
-              initial={{ width: "0%" }}
-              animate={{ width: "85%" }}
-              transition={{
-                duration: 3,
-                ease: "linear",
-                repeat: Number.POSITIVE_INFINITY,
-              }}
-            />
-          </div>
-
-          {/* Playing indicator */}
-          <div className="absolute top-4 left-4 flex items-center gap-1.5">
-            <div
-              className="w-5 h-5 rounded-full flex items-center justify-center"
-              style={{ background: "#19E6FF22", border: "1px solid #19E6FF44" }}
-            >
-              <Play size={10} fill="#19E6FF" color="#19E6FF" />
-            </div>
-            <span className="text-white/60 text-xs">Oynatılıyor</span>
-          </div>
-
-          {/* Center emoji */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <motion.div
-              className="text-8xl"
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-            >
-              {reel.mood}
-            </motion.div>
-          </div>
-
-          {/* Bottom info */}
-          <div className="absolute bottom-6 left-4 right-16">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">{reel.authorEmoji}</span>
-              <span className="text-white/80 text-sm font-mono">
-                {reel.authorId}
-              </span>
-            </div>
-            <p className="text-white/70 text-sm mb-2">{reel.description}</p>
-            <div className="flex flex-wrap gap-2">
-              {reel.location && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full"
-                  style={{
-                    background: "rgba(6,7,11,0.6)",
-                    color: "#A7ACBE",
-                    backdropFilter: "blur(4px)",
-                  }}
-                >
-                  {reel.location}
-                </span>
-              )}
-              {reel.rideTag && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1"
-                  style={{
-                    background: "rgba(47,245,199,0.15)",
-                    color: "#2FF5C7",
-                    border: "1px solid #2FF5C744",
-                  }}
-                >
-                  <Car size={10} />
-                  Seyahat sırasında
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Right actions */}
-          <div className="absolute right-3 bottom-8 flex flex-col items-center gap-5">
-            <button
-              type="button"
-              onClick={() => toggleLike(reel.id)}
-              className="flex flex-col items-center gap-1"
-              data-ocid="reels.like_button"
-            >
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{
-                  background: reel.liked
-                    ? "#FF4F4F22"
-                    : "rgba(255,255,255,0.1)",
-                }}
-              >
-                <Heart
-                  size={20}
-                  fill={reel.liked ? "#FF4F4F" : "none"}
-                  color={reel.liked ? "#FF4F4F" : "white"}
-                />
-              </div>
-              <span className="text-white/60 text-xs">
-                {formatCount(reel.likes)}
-              </span>
-            </button>
-            <button
-              type="button"
-              className="flex flex-col items-center gap-1"
-              data-ocid="reels.comment_button"
-            >
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.1)" }}
-              >
-                <MessageCircle size={20} color="white" />
-              </div>
-              <span className="text-white/60 text-xs">
-                {formatCount(reel.comments)}
-              </span>
-            </button>
-            <button
-              type="button"
-              className="flex flex-col items-center gap-1"
-              data-ocid="reels.share_button"
-            >
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.1)" }}
-              >
-                <Share2 size={20} color="white" />
-              </div>
-              <span className="text-white/60 text-xs">
-                {formatCount(reel.views)}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setTipTarget(reel.authorId)}
-              className="flex flex-col items-center gap-1"
-              data-ocid="reels.tip_button"
-            >
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{
-                  background: "rgba(181,107,255,0.2)",
-                  border: "1px solid #B56BFF44",
-                }}
-              >
-                <Coins size={20} color="#B56BFF" />
-              </div>
-              <span className="text-white/60 text-xs">Tip</span>
-            </button>
-            <button
-              type="button"
-              className="flex flex-col items-center gap-1"
-              data-ocid="reels.more_button"
-            >
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.1)" }}
-              >
-                <MoreVertical size={20} color="white" />
-              </div>
-            </button>
-          </div>
+      {reels.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-full gap-4">
+          <span className="text-5xl">🎬</span>
+          <p className="text-base font-bold" style={{ color: "#19E6FF" }}>
+            Henüz video yok
+          </p>
+          <p className="text-sm" style={{ color: "#4A5568" }}>
+            İlk videonu yükle
+          </p>
         </div>
-      ))}
+      ) : (
+        reels.map((reel, i) => (
+          <div
+            key={reel.id}
+            className="relative flex-shrink-0"
+            style={{
+              height: "100%",
+              scrollSnapAlign: "start",
+              background: reel.gradient,
+            }}
+            data-ocid={`reels.item.${i + 1}`}
+          >
+            {/* Progress bar */}
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-white/20">
+              <motion.div
+                className="h-full bg-white"
+                initial={{ width: "0%" }}
+                animate={{ width: "85%" }}
+                transition={{
+                  duration: 3,
+                  ease: "linear",
+                  repeat: Number.POSITIVE_INFINITY,
+                }}
+              />
+            </div>
+
+            {/* Playing indicator */}
+            <div className="absolute top-4 left-4 flex items-center gap-1.5">
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center"
+                style={{
+                  background: "#19E6FF22",
+                  border: "1px solid #19E6FF44",
+                }}
+              >
+                <Play size={10} fill="#19E6FF" color="#19E6FF" />
+              </div>
+              <span className="text-white/60 text-xs">Oynatılıyor</span>
+            </div>
+
+            {/* Center emoji */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div
+                className="text-8xl"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+              >
+                {reel.mood}
+              </motion.div>
+            </div>
+
+            {/* Bottom info */}
+            <div className="absolute bottom-6 left-4 right-16">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl">{reel.authorEmoji}</span>
+                <span className="text-white/80 text-sm font-mono">
+                  {reel.authorId}
+                </span>
+              </div>
+              <p className="text-white/70 text-sm mb-2">{reel.description}</p>
+              <div className="flex flex-wrap gap-2">
+                {reel.location && (
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full"
+                    style={{
+                      background: "rgba(6,7,11,0.6)",
+                      color: "#A7ACBE",
+                      backdropFilter: "blur(4px)",
+                    }}
+                  >
+                    {reel.location}
+                  </span>
+                )}
+                {reel.rideTag && (
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1"
+                    style={{
+                      background: "rgba(47,245,199,0.15)",
+                      color: "#2FF5C7",
+                      border: "1px solid #2FF5C744",
+                    }}
+                  >
+                    <Car size={10} />
+                    Seyahat sırasında
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Right actions */}
+            <div className="absolute right-3 bottom-8 flex flex-col items-center gap-5">
+              <button
+                type="button"
+                onClick={() => toggleLike(reel.id)}
+                className="flex flex-col items-center gap-1"
+                data-ocid="reels.like_button"
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{
+                    background: reel.liked
+                      ? "#FF4F4F22"
+                      : "rgba(255,255,255,0.1)",
+                  }}
+                >
+                  <Heart
+                    size={20}
+                    fill={reel.liked ? "#FF4F4F" : "none"}
+                    color={reel.liked ? "#FF4F4F" : "white"}
+                  />
+                </div>
+                <span className="text-white/60 text-xs">
+                  {formatCount(reel.likes)}
+                </span>
+              </button>
+              <button
+                type="button"
+                className="flex flex-col items-center gap-1"
+                data-ocid="reels.comment_button"
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.1)" }}
+                >
+                  <MessageCircle size={20} color="white" />
+                </div>
+                <span className="text-white/60 text-xs">
+                  {formatCount(reel.comments)}
+                </span>
+              </button>
+              <button
+                type="button"
+                className="flex flex-col items-center gap-1"
+                data-ocid="reels.share_button"
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.1)" }}
+                >
+                  <Share2 size={20} color="white" />
+                </div>
+                <span className="text-white/60 text-xs">
+                  {formatCount(reel.views)}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTipTarget(reel.authorId)}
+                className="flex flex-col items-center gap-1"
+                data-ocid="reels.tip_button"
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{
+                    background: "rgba(181,107,255,0.2)",
+                    border: "1px solid #B56BFF44",
+                  }}
+                >
+                  <Coins size={20} color="#B56BFF" />
+                </div>
+                <span className="text-white/60 text-xs">Tip</span>
+              </button>
+              <button
+                type="button"
+                className="flex flex-col items-center gap-1"
+                data-ocid="reels.more_button"
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.1)" }}
+                >
+                  <MoreVertical size={20} color="white" />
+                </div>
+              </button>
+            </div>
+          </div>
+        ))
+      )}
 
       <AnimatePresence>
         {tipTarget && (

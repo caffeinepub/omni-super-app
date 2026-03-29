@@ -1841,25 +1841,8 @@ function DiscoveryTab() {
 }
 
 // ── TAB 6: Reputation ──────────────────────────────────────────────────────────
-const MOCK_ABUSE_EVENTS = [
-  {
-    ts: Date.now() - 3600000,
-    event: "Mesaj aktivitesi tarandı",
-    status: "clean",
-  },
-  { ts: Date.now() - 7200000, event: "İşlem doğrulandı", status: "clean" },
-  {
-    ts: Date.now() - 14400000,
-    event: "Şüpheli IP tespit",
-    status: "suspicious",
-  },
-  { ts: Date.now() - 86400000, event: "Normal kullanım", status: "clean" },
-  {
-    ts: Date.now() - 172800000,
-    event: "Spam girişimi engellendi",
-    status: "blocked",
-  },
-];
+const MOCK_ABUSE_EVENTS: Array<{ ts: number; event: string; status: string }> =
+  [];
 
 function ReputationTab() {
   const { identities, activeIdentityId } = useOmniStore();
@@ -1963,36 +1946,54 @@ function ReputationTab() {
             AI İSTİSMAR TESPİT
           </span>
         </div>
-        {MOCK_ABUSE_EVENTS.map((ev, idx) => (
+        {MOCK_ABUSE_EVENTS.length === 0 ? (
           <div
-            key={ev.event}
-            data-ocid={`reputation.item.${idx + 1}`}
-            className="flex items-center justify-between py-2"
-            style={{ borderTop: idx > 0 ? "1px solid #0F1320" : "none" }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              padding: "16px 0",
+              gap: 6,
+            }}
           >
-            <div>
-              <div style={{ color: "#A7ACBE", fontSize: 12 }}>{ev.event}</div>
-              <div style={{ color: "#4A5568", fontSize: 10 }}>
-                {new Date(ev.ts).toLocaleString("tr-TR", {
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </div>
-            </div>
-            <Badge
-              style={{
-                background: `${statusColor(ev.status)}15`,
-                color: statusColor(ev.status),
-                fontSize: 9,
-                padding: "2px 6px",
-              }}
-            >
-              {statusLabel(ev.status)}
-            </Badge>
+            <span style={{ fontSize: 28 }}>🛡️</span>
+            <p style={{ color: "#2FF5C7", fontSize: 12, fontWeight: 600 }}>
+              Temiz geçmiş
+            </p>
+            <p style={{ color: "#4A5568", fontSize: 10 }}>Henüz etkinlik yok</p>
           </div>
-        ))}
+        ) : (
+          MOCK_ABUSE_EVENTS.map((ev, idx) => (
+            <div
+              key={ev.event}
+              data-ocid={`reputation.item.${idx + 1}`}
+              className="flex items-center justify-between py-2"
+              style={{ borderTop: idx > 0 ? "1px solid #0F1320" : "none" }}
+            >
+              <div>
+                <div style={{ color: "#A7ACBE", fontSize: 12 }}>{ev.event}</div>
+                <div style={{ color: "#4A5568", fontSize: 10 }}>
+                  {new Date(ev.ts).toLocaleString("tr-TR", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+              </div>
+              <Badge
+                style={{
+                  background: `${statusColor(ev.status)}15`,
+                  color: statusColor(ev.status),
+                  fontSize: 9,
+                  padding: "2px 6px",
+                }}
+              >
+                {statusLabel(ev.status)}
+              </Badge>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Tips */}

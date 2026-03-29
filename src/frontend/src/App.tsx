@@ -27,6 +27,7 @@ const MODULE_TITLES: Record<string, string> = {
   engine: "RT ENGINE",
   identity: "IDENTITY HUB",
   dating: "DATING",
+  home: "DATING",
   profile: "PROFİL",
 };
 

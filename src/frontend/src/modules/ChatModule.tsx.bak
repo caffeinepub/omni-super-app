@@ -944,14 +944,14 @@ export function ChatModule() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         const raw = addFriendInput.trim();
-                        const digits = raw
-                          .replace(/^\+?777\s*/, "")
-                          .replace(/\D/g, "");
-                        if (digits.length !== 8) {
-                          toast.error("Format: +777 XXXX XXXX (8 rakam)");
+                        const match = raw.replace(/\s+/g, " ").trim();
+                        const formatted = match.startsWith("+777 ")
+                          ? match
+                          : `+777 ${match.replace(/^\+?777\s*/, "")}`;
+                        if (!/^\+777 \d{4} \d{4}$/.test(formatted)) {
+                          toast.error("Format: +777 XXXX XXXX");
                           return;
                         }
-                        const formatted = `+777 ${digits.slice(0, 4)} ${digits.slice(4)}`;
                         const result = addFriendById(
                           formatted as import("@/lib/mockData").AnonymousID,
                         );
@@ -977,14 +977,14 @@ export function ChatModule() {
                     }}
                     onClick={() => {
                       const raw = addFriendInput.trim();
-                      const digits = raw
-                        .replace(/^\+?777\s*/, "")
-                        .replace(/\D/g, "");
-                      if (digits.length !== 8) {
-                        toast.error("Format: +777 XXXX XXXX (8 rakam)");
+                      const match = raw.replace(/\s+/g, " ").trim();
+                      const formatted = match.startsWith("+777 ")
+                        ? match
+                        : `+777 ${match.replace(/^\+?777\s*/, "")}`;
+                      if (!/^\+777 \d{4} \d{4}$/.test(formatted)) {
+                        toast.error("Format: +777 XXXX XXXX");
                         return;
                       }
-                      const formatted = `+777 ${digits.slice(0, 4)} ${digits.slice(4)}`;
                       const result = addFriendById(
                         formatted as import("@/lib/mockData").AnonymousID,
                       );
@@ -1044,7 +1044,7 @@ export function ChatModule() {
                             className="text-sm font-semibold truncate"
                             style={{ color: "#E2E8F0" }}
                           >
-                            {friend.name || friend.friendId}
+                            {friend.friendId}
                           </span>
                           <span
                             className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0"
@@ -1084,10 +1084,11 @@ export function ChatModule() {
                             );
                             if (existing) {
                               setActiveConversation(existing.id);
+                              setActiveTab("dms");
                             } else {
                               const id = createConversation(friend.friendId);
-                              // Use setTimeout to allow store update to propagate
-                              setTimeout(() => setActiveConversation(id), 0);
+                              setActiveConversation(id);
+                              setActiveTab("dms");
                             }
                           }}
                         >
@@ -2596,10 +2597,7 @@ export function ChatModule() {
                   color: "#FF4F4F",
                   action: () => {
                     setShowMediaSheet(false);
-                    if (!activeConversationId) {
-                      toast.error("Önce bir sohbet aç");
-                      return;
-                    }
+                    if (!activeConversationId) return;
                     navigator.geolocation.getCurrentPosition(
                       (pos) => {
                         const lat = pos.coords.latitude.toFixed(5);

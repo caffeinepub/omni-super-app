@@ -19,126 +19,45 @@ import { toast } from "sonner";
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
-const MOCK_POSTS = [
-  {
-    id: "p1",
-    type: "image" as const,
-    gradient: "linear-gradient(135deg, #1a0533 0%, #0d1f40 50%, #001a2c 100%)",
-    likes: 234,
-    caption: "Gece şehri 🌃",
-  },
-  {
-    id: "p2",
-    type: "video" as const,
-    gradient: "linear-gradient(135deg, #0d2b1a 0%, #031a2c 50%, #1a0d33 100%)",
-    likes: 512,
-    caption: "Şehir keşfi 🚗",
-  },
-  {
-    id: "p3",
-    type: "image" as const,
-    gradient: "linear-gradient(135deg, #1a1000 0%, #2a0a1a 50%, #001040 100%)",
-    likes: 89,
-    caption: "Sabah kahvesi ☕",
-  },
-  {
-    id: "p4",
-    type: "image" as const,
-    gradient: "linear-gradient(135deg, #001533 0%, #1a0020 50%, #0d1a00 100%)",
-    likes: 177,
-    caption: "Boğaz manzarası 🌉",
-  },
-  {
-    id: "p5",
-    type: "video" as const,
-    gradient: "linear-gradient(135deg, #0a0a1a 0%, #1a0533 50%, #001a1a 100%)",
-    likes: 891,
-    caption: "Sürüş vlogu 🎥",
-  },
-  {
-    id: "p6",
-    type: "image" as const,
-    gradient: "linear-gradient(135deg, #1a1a00 0%, #001a33 50%, #1a0030 100%)",
-    likes: 345,
-    caption: "Neon ışıklar ✨",
-  },
-];
+const MOCK_POSTS: Array<{
+  id: string;
+  type: "image" | "video";
+  gradient: string;
+  likes: number;
+  caption: string;
+}> = [];
 
-const MOCK_REELS = [
-  {
-    id: "r1",
-    gradient: "linear-gradient(180deg, #06070B 0%, #0d1030 40%, #1a0533 100%)",
-    caption: "Gece sürüşü — Boğaz köprüsünden geçiş 🌉",
-    mood: "🔥 Ateşli",
-    likes: 2847,
-    comments: 156,
-    username: "+777 3821 4490",
-    location: "İstanbul, TR",
-  },
-  {
-    id: "r2",
-    gradient: "linear-gradient(180deg, #06070B 0%, #001a2c 40%, #0d1a00 100%)",
-    caption: "Sabah jogging rutini 🏃 — Beşiktaş sahili",
-    mood: "⚡ Enerjik",
-    likes: 1203,
-    comments: 89,
-    username: "+777 3821 4490",
-    location: "Beşiktaş, İstanbul",
-  },
-];
+const MOCK_REELS: Array<{
+  id: string;
+  gradient: string;
+  caption: string;
+  mood: string;
+  likes: number;
+  comments: number;
+  username: string;
+  location: string;
+}> = [];
 
-const MOCK_MARKET = [
-  {
-    id: "m1",
-    idValue: "+777 0001 0001",
-    rarity: "EFSANEVİ" as const,
-    price: 5000,
-    description: "Ultra nadir tekli rakam dizisi",
-    gradient: "linear-gradient(135deg, #1a0533 0%, #2d0066 100%)",
-    glowColor: "#B56BFF",
-  },
-  {
-    id: "m2",
-    idValue: "+777 1234 5678",
-    rarity: "EPİK" as const,
-    price: 1500,
-    description: "Sıralı rakam dizisi — koleksiyonluk",
-    gradient: "linear-gradient(135deg, #001a33 0%, #003366 100%)",
-    glowColor: "#19E6FF",
-  },
-  {
-    id: "m3",
-    idValue: "+777 7777 7777",
-    rarity: "NADİR" as const,
-    price: 800,
-    description: "Tam yedi dizisi — şans sayısı",
-    gradient: "linear-gradient(135deg, #1a1200 0%, #332200 100%)",
-    glowColor: "#FFB347",
-  },
-];
+const MOCK_MARKET: Array<{
+  id: string;
+  idValue: string;
+  rarity: "EFSANEVİ" | "EPİK" | "NADİR";
+  price: number;
+  description: string;
+  gradient: string;
+  glowColor: string;
+}> = [];
 
-const MOCK_RIDES = [
-  {
-    id: "ri1",
-    from: "Kadıköy Meydan",
-    to: "Levent Metro",
-    price: 87,
-    rating: 5,
-    date: "28 Mar 2026",
-    duration: "34 dk",
-    distanceKm: 12.4,
-  },
-  {
-    id: "ri2",
-    from: "Taksim Meydanı",
-    to: "Sabiha Gökçen",
-    price: 145,
-    rating: 4,
-    date: "25 Mar 2026",
-    duration: "52 dk",
-    distanceKm: 38.7,
-  },
-];
+const MOCK_RIDES: Array<{
+  id: string;
+  from: string;
+  to: string;
+  price: number;
+  rating: number;
+  date: string;
+  duration: string;
+  distanceKm: number;
+}> = [];
 
 const STAR_INDICES = [0, 1, 2, 3, 4] as const;
 
@@ -217,6 +136,19 @@ function PostGrid({
 }: {
   onSelect: (idx: number) => void;
 }) {
+  if (MOCK_POSTS.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <span className="text-4xl">📷</span>
+        <p className="text-sm font-semibold" style={{ color: "#19E6FF" }}>
+          Henüz gönderi yok
+        </p>
+        <p className="text-xs" style={{ color: "#4A5568" }}>
+          İlk fotoğrafını paylaş
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="grid grid-cols-3 gap-0.5 px-0.5">
       {MOCK_POSTS.map((post, idx) => (
@@ -257,6 +189,20 @@ function ReelsView() {
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [currentReel, setCurrentReel] = useState(0);
   const reel = MOCK_REELS[currentReel];
+
+  if (MOCK_REELS.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <span className="text-4xl">🎬</span>
+        <p className="text-sm font-semibold" style={{ color: "#19E6FF" }}>
+          Henüz video yok
+        </p>
+        <p className="text-xs text-center" style={{ color: "#4A5568" }}>
+          İlk videonu paylaş ve keşfedilmeye başla
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -365,65 +311,78 @@ function ReelsView() {
 function MarketList() {
   return (
     <div className="px-2 flex flex-col gap-3">
-      {MOCK_MARKET.map((item, idx) => {
-        const style = RARITY_STYLES[item.rarity];
-        return (
-          <div
-            key={item.id}
-            data-ocid={`profile.item.${idx + 1}`}
-            className="rounded-2xl overflow-hidden p-4"
-            style={{
-              background: item.gradient,
-              border: `1px solid ${item.glowColor}33`,
-              boxShadow: `0 0 20px ${item.glowColor}22`,
-            }}
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-bold"
-                  style={{
-                    background: style.bg,
-                    color: style.color,
-                    border: `1px solid ${style.color}44`,
-                  }}
-                >
-                  {item.rarity}
-                </span>
-                <p
-                  className="text-base font-black mt-1.5"
-                  style={{ color: item.glowColor, fontFamily: "monospace" }}
-                >
-                  {item.idValue}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-bold" style={{ color: "#F0F4FF" }}>
-                  {item.price.toLocaleString()}
-                </p>
-                <p className="text-xs" style={{ color: "#4A5568" }}>
-                  OMNI
-                </p>
-              </div>
-            </div>
-            <p className="text-xs mb-3" style={{ color: "#A7ACBE" }}>
-              {item.description}
-            </p>
-            <button
-              type="button"
-              data-ocid={`profile.secondary_button.${idx + 1}`}
-              className="w-full py-2 rounded-xl text-xs font-bold transition-all"
+      {MOCK_MARKET.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <span className="text-4xl">🏷️</span>
+          <p className="text-sm font-semibold" style={{ color: "#19E6FF" }}>
+            Henüz liste yok
+          </p>
+          <p className="text-xs" style={{ color: "#4A5568" }}>
+            Market'te ilk listenizi oluşturun
+          </p>
+        </div>
+      ) : (
+        MOCK_MARKET.map((item, idx) => {
+          const style = RARITY_STYLES[item.rarity];
+          return (
+            <div
+              key={item.id}
+              data-ocid={`profile.item.${idx + 1}`}
+              className="rounded-2xl overflow-hidden p-4"
               style={{
-                background: `${item.glowColor}22`,
-                border: `1px solid ${item.glowColor}55`,
-                color: item.glowColor,
+                background: item.gradient,
+                border: `1px solid ${item.glowColor}33`,
+                boxShadow: `0 0 20px ${item.glowColor}22`,
               }}
             >
-              Teklif Ver
-            </button>
-          </div>
-        );
-      })}
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full font-bold"
+                    style={{
+                      background: style.bg,
+                      color: style.color,
+                      border: `1px solid ${style.color}44`,
+                    }}
+                  >
+                    {item.rarity}
+                  </span>
+                  <p
+                    className="text-base font-black mt-1.5"
+                    style={{ color: item.glowColor, fontFamily: "monospace" }}
+                  >
+                    {item.idValue}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold" style={{ color: "#F0F4FF" }}>
+                    {item.price.toLocaleString()}
+                  </p>
+                  <p className="text-xs" style={{ color: "#4A5568" }}>
+                    OMNI
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs mb-3" style={{ color: "#A7ACBE" }}>
+                {item.description}
+              </p>
+              <button
+                type="button"
+                data-ocid={`profile.secondary_button.${idx + 1}`}
+                className="w-full py-2 rounded-xl text-xs font-bold transition-all"
+                style={{
+                  background: `${item.glowColor}22`,
+                  border: `1px solid ${item.glowColor}55`,
+                  color: item.glowColor,
+                }}
+              >
+                Teklif Ver
+              </button>
+            </div>
+          );
+        })
+      )}
+      )
     </div>
   );
 }
@@ -431,71 +390,86 @@ function MarketList() {
 function RidesList() {
   return (
     <div className="px-2 flex flex-col gap-3">
-      {MOCK_RIDES.map((ride, idx) => (
-        <div
-          key={ride.id}
-          data-ocid={`profile.item.${idx + 1}`}
-          className="rounded-2xl p-4"
-          style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.07)",
-          }}
-        >
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ background: "#19E6FF" }}
-                />
-                <span
-                  className="text-xs font-medium"
-                  style={{ color: "#F0F4FF" }}
-                >
-                  {ride.from}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ background: "#B56BFF" }}
-                />
-                <span
-                  className="text-xs font-medium"
-                  style={{ color: "#F0F4FF" }}
-                >
-                  {ride.to}
-                </span>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-base font-black" style={{ color: "#19E6FF" }}>
-                ₺{ride.price}
-              </p>
-              <div className="flex items-center justify-end gap-0.5">
-                {STAR_INDICES.map((i) => (
-                  <Star
-                    key={`star-${i}`}
-                    size={9}
-                    fill={i < ride.rating ? "#FFB347" : "transparent"}
-                    style={{
-                      color: i < ride.rating ? "#FFB347" : "#2D3748",
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-          <div
-            className="flex items-center gap-3 text-[10px]"
-            style={{ color: "#4A5568" }}
-          >
-            <span>📅 {ride.date}</span>
-            <span>⏱ {ride.duration}</span>
-            <span>📍 {ride.distanceKm} km</span>
-          </div>
+      {MOCK_RIDES.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <span className="text-4xl">🚗</span>
+          <p className="text-sm font-semibold" style={{ color: "#19E6FF" }}>
+            Henüz sürüş yok
+          </p>
+          <p className="text-xs" style={{ color: "#4A5568" }}>
+            İlk sürüşünden sonra burada görünecek
+          </p>
         </div>
-      ))}
+      ) : (
+        MOCK_RIDES.map((ride, idx) => (
+          <div
+            key={ride.id}
+            data-ocid={`profile.item.${idx + 1}`}
+            className="rounded-2xl p-4"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ background: "#19E6FF" }}
+                  />
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: "#F0F4FF" }}
+                  >
+                    {ride.from}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ background: "#B56BFF" }}
+                  />
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: "#F0F4FF" }}
+                  >
+                    {ride.to}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <p
+                  className="text-base font-black"
+                  style={{ color: "#19E6FF" }}
+                >
+                  ₺{ride.price}
+                </p>
+                <div className="flex items-center justify-end gap-0.5">
+                  {STAR_INDICES.map((i) => (
+                    <Star
+                      key={`star-${i}`}
+                      size={9}
+                      fill={i < ride.rating ? "#FFB347" : "transparent"}
+                      style={{
+                        color: i < ride.rating ? "#FFB347" : "#2D3748",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div
+              className="flex items-center gap-3 text-[10px]"
+              style={{ color: "#4A5568" }}
+            >
+              <span>📅 {ride.date}</span>
+              <span>⏱ {ride.duration}</span>
+              <span>📍 {ride.distanceKm} km</span>
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 }
@@ -511,6 +485,8 @@ function PostViewer({
 }) {
   const [current, setCurrent] = useState(index);
   const post = MOCK_POSTS[current];
+
+  if (!post) return null;
 
   return (
     <div
