@@ -65,15 +65,15 @@ const DESTRUCT_OPTIONS = [
 const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 
 const SMART_REPLIES = [
-  "Got it! 👍",
-  "Thanks!",
-  "On my way 🚗",
-  "Sure, sounds good",
-  "Let me check",
-  "Tell me more",
-  "lol 😂",
-  "Interesting...",
-  "Can we talk later?",
+  "👍 Anladım!",
+  "Teşekkürler!",
+  "Yolda 🚗",
+  "Harika, olur!",
+  "Bir bakayım",
+  "Daha fazla anlat",
+  "😂 Haha",
+  "İlginç...",
+  "Sonra konuşabilir miyiz?",
   "👀",
 ];
 
@@ -984,9 +984,8 @@ export function ChatModule() {
                             const convId = existing
                               ? existing.id
                               : createConversation(friend.friendId);
-                            setTimeout(() => {
-                              setActiveConversation(convId);
-                            }, 0);
+                            setActiveConversation(convId);
+                            setActiveTab("dms");
                           }}
                         >
                           <Send size={14} />
@@ -1090,7 +1089,13 @@ export function ChatModule() {
             </div>
           ) : (
             filteredConvs.map((conv, idx) => {
-              const title = conv.name || conv.participants[0] || "Unknown";
+              const otherPId = conv.name
+                ? null
+                : (conv.participants.find((p) => p !== myId && p !== "me") ??
+                  conv.participants[0]);
+              const otherFriend = friends.find((f) => f.friendId === otherPId);
+              const title =
+                conv.name || otherFriend?.name || otherPId || "Sohbet";
               const isOnline = false;
               const lastMsg = conv.lastMessage ?? "";
               const displayLast =

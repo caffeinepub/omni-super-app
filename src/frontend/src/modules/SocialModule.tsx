@@ -19,6 +19,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useStorageUpload } from "../hooks/useStorageUpload";
+import type { AnonymousID } from "../lib/mockData";
 import {
   type SocialPost,
   type SocialReel,
@@ -860,15 +861,17 @@ function FeedTab() {
 // ─── Reels Tab ────────────────────────────────────────────────────────────────
 
 function ReelsTab() {
-  const { socialReels: reels } = useOmniStore();
+  const {
+    socialReels: reels,
+    likeReel,
+    sendTokens: storeSendTokens,
+  } = useOmniStore();
   const [tipTarget, setTipTarget] = useState<string | null>(null);
   const { tokenBalance } = useOmniStore();
   const [localBalance, setLocalBalance] = useState(tokenBalance);
 
   const toggleLike = (id: string) => {
-    // Reels like is local for now (reels don't have a store action yet)
-    // TODO: add likeReel to store
-    void id;
+    likeReel(id);
   };
 
   const handleTip = (amount: number) => {
@@ -877,6 +880,7 @@ function ReelsTab() {
       toast.error("Yetersiz bakiye!");
       return;
     }
+    storeSendTokens(tipTarget as AnonymousID, amount);
     setLocalBalance((b) => b - amount);
     toast.success(`${amount} OMNI gönderildi! 💫`);
     setTipTarget(null);
@@ -1305,10 +1309,22 @@ function ProfileTab() {
     "+777 0000 0000";
   const displayEmoji = activeIdentity?.emoji ?? "🔮";
   const displayName = activeIdentity?.nickname ?? "Anonim";
-  const trust = 94;
-  const followers = 1247;
-  const following = 389;
-  const posts = 42;
+  const {
+    socialPosts: allSocialPosts,
+    userTrustScore,
+    followers: storeFollowers,
+    following: storeFollowing,
+  } = useOmniStore();
+  const storeMyId777 =
+    useOmniStore.getState().myId ??
+    localStorage.getItem("omni-permanent-id") ??
+    "";
+  const trust = Math.round((userTrustScore ?? 0) * 20);
+  const followers = storeFollowers;
+  const following = storeFollowing;
+  const posts = allSocialPosts.filter(
+    (p) => p.authorId === storeMyId777,
+  ).length;
 
   const privacyLabel =
     privacyMode === "ghost"

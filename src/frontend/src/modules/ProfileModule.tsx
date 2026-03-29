@@ -763,6 +763,7 @@ function SubSectionPanel({
   myId: string;
 }) {
   if (!section) return null;
+  const storeData = useOmniStore.getState();
 
   const titles: Record<NonNullable<SubSection>, string> = {
     friends: "👥 Arkadaşlar",
@@ -774,9 +775,17 @@ function SubSectionPanel({
   const content: Record<NonNullable<SubSection>, React.ReactNode> = {
     friends: (
       <div className="flex flex-col gap-2">
-        {["+777 9921 3304", "+777 5540 8812", "+777 2287 6631"].map((id, i) => (
+        {storeData.friends.length === 0 && (
           <div
-            key={id}
+            className="text-xs text-center py-3"
+            style={{ color: "#4A5568" }}
+          >
+            Henüz arkadaş yok
+          </div>
+        )}
+        {storeData.friends.slice(0, 5).map((f, i) => (
+          <div
+            key={f.friendId}
             className="flex items-center gap-3 p-3 rounded-xl"
             style={{ background: "rgba(255,255,255,0.04)" }}
           >
@@ -784,10 +793,10 @@ function SubSectionPanel({
               className="w-9 h-9 rounded-full flex items-center justify-center text-base"
               style={{ background: "rgba(25,230,255,0.1)" }}
             >
-              {["🌙", "⚡", "🌊"][i]}
+              {["🌙", "⚡", "🌊", "🔥", "💫"][i % 5]}
             </div>
             <span className="text-sm font-mono" style={{ color: "#19E6FF" }}>
-              {id}
+              {f.name || f.friendId}
             </span>
             <span
               className="ml-auto text-xs px-2 py-0.5 rounded-full"
@@ -804,10 +813,15 @@ function SubSectionPanel({
     ),
     match: (
       <div className="flex flex-col gap-2">
-        {[
-          { id: "+777 2847 3901", emoji: "🌙", mood: "Mistik" },
-          { id: "+777 5519 6628", emoji: "⚡", mood: "Enerjik" },
-        ].map((m, i) => (
+        {storeData.datingMatches.length === 0 && (
+          <div
+            className="text-xs text-center py-3"
+            style={{ color: "#4A5568" }}
+          >
+            Henüz eşleşme yok
+          </div>
+        )}
+        {storeData.datingMatches.slice(0, 3).map((m, i) => (
           <div
             key={m.id}
             className="flex items-center gap-3 p-3 rounded-xl"
@@ -821,14 +835,14 @@ function SubSectionPanel({
               className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
               style={{ background: "rgba(181,107,255,0.15)" }}
             >
-              {m.emoji}
+              {m.profile.emoji}
             </div>
             <div>
               <p className="text-xs font-mono" style={{ color: "#A7ACBE" }}>
-                {m.id}
+                {m.profile.anonymousId}
               </p>
               <p className="text-xs" style={{ color: "#B56BFF" }}>
-                {m.mood}
+                {m.profile.mood}
               </p>
             </div>
             <button
@@ -987,7 +1001,7 @@ export function ProfileModule() {
   const profileId =
     myId ?? localStorage.getItem("omni-permanent-id") ?? "+777 0000 0000";
   const name = displayName !== "Anonymous" ? displayName : null;
-  const trustDisplay = ((userTrustScore ?? 80) / 20).toFixed(1);
+  const trustDisplay = (userTrustScore ?? 0).toFixed(1);
   const myPostCount = socialPosts.filter(
     (p) => p.authorId === (myId ?? ""),
   ).length;

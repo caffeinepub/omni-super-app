@@ -35,6 +35,7 @@ export function MarketModule() {
     createListing,
     myId,
     tokenBalance,
+    userTrustScore,
     setActiveModule,
     createConversation,
     setActiveConversation,
@@ -83,7 +84,7 @@ export function MarketModule() {
       description: newDesc,
       price: Number.parseInt(newPrice) || 0,
       category: newCategory,
-      trustScore: 70,
+      trustScore: userTrustScore ?? 0,
     });
     setShowCreate(false);
     setNewTitle("");

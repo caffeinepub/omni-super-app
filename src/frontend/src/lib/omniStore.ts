@@ -325,6 +325,8 @@ interface OmniState {
   addSocialReel: (reel: SocialReel) => void;
   deleteSocialPost: (postId: string) => void;
   likeSocialPost: (postId: string) => void;
+  likedReels: string[];
+  likeReel: (reelId: string) => void;
 
   // Profile customization
   profileAvatarUrl: string | null;
@@ -649,6 +651,13 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
               : p,
           ),
         })),
+      likedReels: [],
+      likeReel: (reelId) =>
+        set((s) => ({
+          likedReels: s.likedReels.includes(reelId)
+            ? s.likedReels.filter((id) => id !== reelId)
+            : [...s.likedReels, reelId],
+        })),
       profileAvatarUrl: null,
       setProfileAvatarUrl: (url) => set({ profileAvatarUrl: url }),
       profileBio: "",
@@ -880,7 +889,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       },
 
       // Wallet
-      tokenBalance: 250,
+      tokenBalance: 0,
       transactions: [],
       claimedRewards: [],
 
@@ -940,10 +949,10 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       p2pOffers: [],
       escrowTrades: [],
       idListings: [],
-      userTrustScore: 4.2,
-      completedTrades: 7,
-      referralCount: 2,
-      dailyStreakDays: 3,
+      userTrustScore: 0,
+      completedTrades: 0,
+      referralCount: 0,
+      dailyStreakDays: 0,
       dailyStreakClaimed: false,
       claimedDrops: [],
 
@@ -1369,7 +1378,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
     }),
     {
       name: "omni-store",
-      version: 6,
+      version: 7,
       migrate: (persistedState: unknown, fromVersion: number) => {
         const state = persistedState as Record<string, unknown>;
         if (fromVersion < 4) {
@@ -1426,6 +1435,11 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
           state.followers = 0;
           state.following = 0;
         }
+        if (fromVersion < 7) {
+          (state as Record<string, unknown>).rideRole = undefined;
+          (state as Record<string, unknown>).driverOnline = undefined;
+          if (!Array.isArray(state.likedReels)) state.likedReels = [];
+        }
         if (fromVersion < 6) {
           if (Array.isArray(state.conversations)) {
             state.conversations = (
@@ -1474,12 +1488,11 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
         privacyMode: state.privacyMode,
         datingMatches: state.datingMatches,
         datingDailySwipes: state.datingDailySwipes,
-        rideRole: state.rideRole,
-        driverOnline: state.driverOnline,
         rideHistory: state.rideHistory,
         driverEarnings: state.driverEarnings,
         socialPosts: state.socialPosts,
         socialReels: state.socialReels,
+        likedReels: state.likedReels,
         profileAvatarUrl: state.profileAvatarUrl,
         profileBio: state.profileBio,
         followers: state.followers,

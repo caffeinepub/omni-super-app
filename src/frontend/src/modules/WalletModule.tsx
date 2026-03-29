@@ -72,8 +72,8 @@ function formatCountdown(expiresAt: number): string {
   if (diff <= 0) return "Süre doldu";
   const h = Math.floor(diff / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
-  if (h > 24) return `${Math.floor(h / 24)}g ${h % 24}s`;
-  return `${h}s ${m}d`;
+  if (h > 24) return `${Math.floor(h / 24)}g ${h % 24}sa`;
+  return `${h}sa ${m}dk`;
 }
 
 const EARN_ACTIVITIES = [
@@ -712,9 +712,9 @@ function WalletTab() {
               const diff = Date.now() - tsMs;
               const relTime =
                 diff < 3600000
-                  ? `${Math.floor(diff / 60000)}d`
+                  ? `${Math.floor(diff / 60000)}dk`
                   : diff < 86400000
-                    ? `${Math.floor(diff / 3600000)}s`
+                    ? `${Math.floor(diff / 3600000)}sa`
                     : `${Math.floor(diff / 86400000)}g`;
               const isSend = tx.from.toString() !== "2vxsx-fae";
               return (
