@@ -19,43 +19,17 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useStorageUpload } from "../hooks/useStorageUpload";
-import { useOmniStore } from "../lib/omniStore";
+import {
+  type SocialPost,
+  type SocialReel,
+  useOmniStore,
+} from "../lib/omniStore";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type Privacy = "PUBLIC" | "FRIENDS" | "ANON" | "GHOST";
 
-interface Post {
-  id: string;
-  authorId: string;
-  authorEmoji: string;
-  content: string;
-  mood: string;
-  privacy: Privacy;
-  likes: number;
-  comments: number;
-  shares: number;
-  rideTag?: boolean;
-  time: string;
-  liked: boolean;
-  mediaUrl?: string;
-  mediaType?: "image" | "video";
-}
-
-interface Reel {
-  id: string;
-  authorId: string;
-  authorEmoji: string;
-  mood: string;
-  description: string;
-  likes: number;
-  comments: number;
-  views: number;
-  location?: string;
-  rideTag?: boolean;
-  gradient: string;
-  liked: boolean;
-}
+type Post = SocialPost;
 
 interface Story {
   id: string;
@@ -80,66 +54,7 @@ interface NearbyUser {
 
 const INITIAL_STORIES: Story[] = [];
 
-const INITIAL_POSTS: Post[] = [];
-
-const INITIAL_REELS: Reel[] = [];
-
-const NEARBY_USERS: NearbyUser[] = [
-  {
-    id: "u1",
-    userId: "+777 3842 9173",
-    emoji: "🦊",
-    trust: 94,
-    online: true,
-    following: false,
-    mood: "🔥",
-  },
-  {
-    id: "u2",
-    userId: "+777 5521 0834",
-    emoji: "🌊",
-    trust: 87,
-    online: true,
-    following: true,
-    mood: "😎",
-  },
-  {
-    id: "u3",
-    userId: "+777 7790 2265",
-    emoji: "⚡",
-    trust: 91,
-    online: false,
-    following: false,
-    mood: "⚡",
-  },
-  {
-    id: "u4",
-    userId: "+777 1138 6647",
-    emoji: "🔮",
-    trust: 78,
-    online: true,
-    following: false,
-    mood: "🌙",
-  },
-  {
-    id: "u5",
-    userId: "+777 9903 4412",
-    emoji: "🎭",
-    trust: 96,
-    online: true,
-    following: true,
-    mood: "💔",
-  },
-  {
-    id: "u6",
-    userId: "+777 4456 8891",
-    emoji: "🌸",
-    trust: 83,
-    online: false,
-    following: false,
-    mood: "🌸",
-  },
-];
+const NEARBY_USERS: NearbyUser[] = [];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -596,7 +511,7 @@ function MediaUploadModal({
 
 function FeedTab() {
   const [stories] = useState(INITIAL_STORIES);
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const { socialPosts: posts, addSocialPost, likeSocialPost } = useOmniStore();
   const [activeStory, setActiveStory] = useState<Story | null>(null);
   const [tipTarget, setTipTarget] = useState<string | null>(null);
   const [commentOpen, setCommentOpen] = useState<string | null>(null);
@@ -606,17 +521,7 @@ function FeedTab() {
   const [localBalance, setLocalBalance] = useState(tokenBalance);
 
   const toggleLike = (id: string) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              liked: !p.liked,
-              likes: p.liked ? p.likes - 1 : p.likes + 1,
-            }
-          : p,
-      ),
-    );
+    likeSocialPost(id);
   };
 
   const handleTip = (amount: number) => {
@@ -631,9 +536,10 @@ function FeedTab() {
   };
 
   const handleCreate = (partial: Partial<Post>) => {
+    const { myId: storeMyId } = useOmniStore.getState();
     const newPost: Post = {
       id: `p${Date.now()}`,
-      authorId: "+777 0000 0001",
+      authorId: storeMyId ?? "+777 0000 0001",
       authorEmoji: "🔮",
       content: partial.content ?? "",
       mood: partial.mood ?? "🔥",
@@ -644,7 +550,7 @@ function FeedTab() {
       time: "Şimdi",
       liked: false,
     };
-    setPosts((prev) => [newPost, ...prev]);
+    addSocialPost(newPost);
     toast.success("Gönderi paylaşıldı!");
   };
 
@@ -951,23 +857,15 @@ function FeedTab() {
 // ─── Reels Tab ────────────────────────────────────────────────────────────────
 
 function ReelsTab() {
-  const [reels, setReels] = useState(INITIAL_REELS);
+  const { socialReels: reels } = useOmniStore();
   const [tipTarget, setTipTarget] = useState<string | null>(null);
   const { tokenBalance } = useOmniStore();
   const [localBalance, setLocalBalance] = useState(tokenBalance);
 
   const toggleLike = (id: string) => {
-    setReels((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              liked: !r.liked,
-              likes: r.liked ? r.likes - 1 : r.likes + 1,
-            }
-          : r,
-      ),
-    );
+    // Reels like is local for now (reels don't have a store action yet)
+    // TODO: add likeReel to store
+    void id;
   };
 
   const handleTip = (amount: number) => {
@@ -1196,6 +1094,7 @@ function ReelsTab() {
 // ─── Explore Tab ──────────────────────────────────────────────────────────────
 
 function ExploreTab() {
+  const { socialReels } = useOmniStore();
   const [moodFilter, setMoodFilter] = useState("All");
   const [users, setUsers] = useState(NEARBY_USERS);
 
@@ -1205,8 +1104,8 @@ function ExploreTab() {
     );
   };
 
-  const trendingReels = INITIAL_REELS.slice(0, 4);
-  const viralGrid = [...INITIAL_REELS, ...INITIAL_REELS].slice(0, 9);
+  const trendingReels = socialReels.slice(0, 4);
+  const viralGrid = [...socialReels, ...socialReels].slice(0, 9);
 
   return (
     <div
@@ -1289,6 +1188,14 @@ function ExploreTab() {
         <div className="text-white font-semibold mb-3">
           👥 Yakındaki Kullanıcılar
         </div>
+        {users.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-8 gap-2">
+            <span className="text-3xl">👻</span>
+            <p className="text-sm" style={{ color: "#4A5568" }}>
+              Yakında kullanıcı yok
+            </p>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           {users.map((u, i) => (
             <div
@@ -1413,8 +1320,9 @@ function ProfileTab() {
     setActiveModule("chat");
   };
 
-  const gridItems = INITIAL_REELS;
-  const reelItems = INITIAL_REELS.slice(0, 4);
+  const { socialReels: storeReels, myId: storeMyId } = useOmniStore();
+  const gridItems = storeReels.filter((r) => r.authorId === (storeMyId ?? ""));
+  const reelItems = gridItems.slice(0, 4);
   const storyItems = INITIAL_STORIES.slice(0, 3);
 
   return (

@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useActor } from "./useActor";
+
+let _pendingOffer: SignalMessage | undefined;
 
 const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
@@ -72,7 +75,6 @@ export function useWebRTC(myId777: string | null) {
     async (toId777: string, msg: SignalMessage) => {
       if (!actor) return;
       try {
-        // biome-ignore lint/suspicious/noExplicitAny: dynamic backend method
         await (actor as any).sendSignal(toId777, JSON.stringify(msg));
       } catch (e) {
         console.error("sendSignal error", e);
@@ -149,7 +151,10 @@ export function useWebRTC(myId777: string | null) {
 
   const initiateCall = useCallback(
     async (targetId777: string, type: "voice" | "video") => {
-      if (!actor || !myId777) return;
+      if (!actor || !myId777) {
+        toast.error("Arama yapabilmek için ICP ile giriş yapman gerekiyor");
+        return;
+      }
       setCallType(type);
       setRemoteId777(targetId777);
       setCallState("outgoing-ringing");
@@ -233,7 +238,6 @@ export function useWebRTC(myId777: string | null) {
 
     const poll = async () => {
       try {
-        // biome-ignore lint/suspicious/noExplicitAny: dynamic backend method
         const signals = await (actor as any).pollMySignals();
         for (const raw of signals) {
           try {
@@ -260,7 +264,7 @@ export function useWebRTC(myId777: string | null) {
         setIncomingCall({ fromId777: msg.fromId777, callType: msg.callType });
         // We need to handle the offer SDP when answering
         // Store it temporarily
-        (window as unknown as Record<string, unknown>).__pendingOffer = msg;
+        _pendingOffer = msg;
       }
     } else if (msg.type === "answer" && msg.sdp) {
       const pc = pcRef.current;
@@ -299,8 +303,7 @@ export function useWebRTC(myId777: string | null) {
   const answerCallWithOffer = useCallback(async () => {
     if (!incomingCall || !actor || !myId777) return;
     const { fromId777, callType: ct } = incomingCall;
-    const pendingOffer = (window as unknown as Record<string, unknown>)
-      .__pendingOffer as SignalMessage | undefined;
+    const pendingOffer = _pendingOffer;
 
     setCallType(ct);
     setRemoteId777(fromId777);
@@ -344,7 +347,7 @@ export function useWebRTC(myId777: string | null) {
       } catch {}
     }
     pendingIceCandidates.current = [];
-    (window as unknown as Record<string, unknown>).__pendingOffer = undefined;
+    _pendingOffer = undefined;
   }, [incomingCall, actor, myId777, createPC, getMedia, sendSignalMsg]);
 
   return {

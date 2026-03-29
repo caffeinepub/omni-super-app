@@ -1,6 +1,6 @@
 import { useICPIdentity } from "@/context/ICPIdentityContext";
 import { useActor } from "@/hooks/useActor";
-import { generateAnonymousID } from "@/lib/mockData";
+import { type AnonymousID, generateAnonymousID } from "@/lib/mockData";
 import { useOmniStore } from "@/lib/omniStore";
 import {
   CheckCircle2,
@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export function OnboardingScreen() {
-  const { completeOnboarding } = useOmniStore();
+  const { completeOnboarding, isOnboarded } = useOmniStore();
   const { login, isLoading, isAuthenticated, principal, activeId777 } =
     useICPIdentity();
   const [step, setStep] = useState<
@@ -48,6 +48,15 @@ export function OnboardingScreen() {
       setStep("icp-success");
     }
   }, [isAuthenticated, principal, step]);
+
+  // Restore permanent ID across sessions/migrations
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally runs once on mount
+  useEffect(() => {
+    const permanentId = localStorage.getItem("omni-permanent-id");
+    if (permanentId && !isOnboarded) {
+      completeOnboarding(permanentId as AnonymousID, "");
+    }
+  }, []);
 
   const handleGenerate = () => setStep("generate");
   const handleLock = () => setStep("name");

@@ -27,7 +27,6 @@ const MODULE_TITLES: Record<string, string> = {
   engine: "RT ENGINE",
   identity: "IDENTITY HUB",
   dating: "DATING",
-  home: "DATING",
   profile: "PROFİL",
 };
 
@@ -92,7 +91,6 @@ export default function App() {
             {activeModule === "engine" && <EngineModule />}
             {activeModule === "identity" && <IdentityModule />}
             {activeModule === "dating" && <DatingModule />}
-            {activeModule === "home" && <DatingModule />}
             {activeModule === "profile" && <ProfileModule />}
           </div>
         </main>

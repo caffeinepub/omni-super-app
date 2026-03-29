@@ -14,58 +14,11 @@ import {
   Video,
   Zap,
 } from "lucide-react";
+import type React from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const MOCK_POSTS: Array<{
-  id: string;
-  type: "image" | "video";
-  gradient: string;
-  likes: number;
-  caption: string;
-}> = [];
-
-const MOCK_REELS: Array<{
-  id: string;
-  gradient: string;
-  caption: string;
-  mood: string;
-  likes: number;
-  comments: number;
-  username: string;
-  location: string;
-}> = [];
-
-const MOCK_MARKET: Array<{
-  id: string;
-  idValue: string;
-  rarity: "EFSANEVİ" | "EPİK" | "NADİR";
-  price: number;
-  description: string;
-  gradient: string;
-  glowColor: string;
-}> = [];
-
-const MOCK_RIDES: Array<{
-  id: string;
-  from: string;
-  to: string;
-  price: number;
-  rating: number;
-  date: string;
-  duration: string;
-  distanceKm: number;
-}> = [];
-
 const STAR_INDICES = [0, 1, 2, 3, 4] as const;
-
-const RARITY_STYLES = {
-  EFSANEVİ: { color: "#B56BFF", bg: "rgba(181,107,255,0.15)" },
-  EPİK: { color: "#19E6FF", bg: "rgba(25,230,255,0.12)" },
-  NADİR: { color: "#FFB347", bg: "rgba(255,179,71,0.12)" },
-};
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -136,7 +89,10 @@ function PostGrid({
 }: {
   onSelect: (idx: number) => void;
 }) {
-  if (MOCK_POSTS.length === 0) {
+  const { socialPosts, myId, setActiveModule } = useOmniStore();
+  const myPosts = socialPosts.filter((p) => p.authorId === (myId ?? ""));
+
+  if (myPosts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
         <span className="text-4xl">📷</span>
@@ -146,12 +102,25 @@ function PostGrid({
         <p className="text-xs" style={{ color: "#4A5568" }}>
           İlk fotoğrafını paylaş
         </p>
+        <button
+          type="button"
+          onClick={() => setActiveModule("social")}
+          className="mt-2 px-5 py-2 rounded-xl text-xs font-bold"
+          style={{
+            background: "rgba(25,230,255,0.15)",
+            color: "#19E6FF",
+            border: "1px solid rgba(25,230,255,0.3)",
+          }}
+          data-ocid="profile.post.button"
+        >
+          Gönderi Paylaş
+        </button>
       </div>
     );
   }
   return (
     <div className="grid grid-cols-3 gap-0.5 px-0.5">
-      {MOCK_POSTS.map((post, idx) => (
+      {myPosts.map((post, idx) => (
         <button
           key={post.id}
           type="button"
@@ -160,11 +129,29 @@ function PostGrid({
           className="relative aspect-square overflow-hidden"
           style={{ borderRadius: "4px" }}
         >
-          <div
-            className="w-full h-full"
-            style={{ background: post.gradient }}
-          />
-          {post.type === "video" && (
+          {post.mediaUrl ? (
+            post.mediaType === "video" ? (
+              <video
+                src={post.mediaUrl}
+                className="w-full h-full object-cover"
+                muted
+              />
+            ) : (
+              <img
+                src={post.mediaUrl}
+                alt="post"
+                className="w-full h-full object-cover"
+              />
+            )
+          ) : (
+            <div
+              className="w-full h-full flex items-center justify-center text-2xl"
+              style={{ background: "#1E2436" }}
+            >
+              {post.mood || "🔮"}
+            </div>
+          )}
+          {post.mediaType === "video" && (
             <div
               className="absolute inset-0 flex items-center justify-center"
               style={{ background: "rgba(0,0,0,0.2)" }}
@@ -186,11 +173,13 @@ function PostGrid({
 }
 
 function ReelsView() {
+  const { socialReels, myId, setActiveModule } = useOmniStore();
+  const myReels = socialReels.filter((r) => r.authorId === (myId ?? ""));
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [currentReel, setCurrentReel] = useState(0);
-  const reel = MOCK_REELS[currentReel];
+  const reel = myReels[currentReel];
 
-  if (MOCK_REELS.length === 0) {
+  if (myReels.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
         <span className="text-4xl">🎬</span>
@@ -200,6 +189,19 @@ function ReelsView() {
         <p className="text-xs text-center" style={{ color: "#4A5568" }}>
           İlk videonu paylaş ve keşfedilmeye başla
         </p>
+        <button
+          type="button"
+          onClick={() => setActiveModule("social")}
+          className="mt-2 px-5 py-2 rounded-xl text-xs font-bold"
+          style={{
+            background: "rgba(25,230,255,0.15)",
+            color: "#19E6FF",
+            border: "1px solid rgba(25,230,255,0.3)",
+          }}
+          data-ocid="profile.video.button"
+        >
+          Video Paylaş
+        </button>
       </div>
     );
   }
@@ -234,10 +236,10 @@ function ReelsView() {
         }}
       >
         <p className="text-xs font-semibold mb-1" style={{ color: "#19E6FF" }}>
-          {reel.username}
+          {reel.authorId}
         </p>
         <p className="text-sm font-medium text-white mb-1 leading-snug">
-          {reel.caption}
+          {reel.description}
         </p>
         <div className="flex items-center gap-3">
           <span
@@ -290,7 +292,7 @@ function ReelsView() {
 
       {/* Reel pagination */}
       <div className="absolute top-3 left-0 right-0 flex justify-center gap-1.5">
-        {MOCK_REELS.map((r, i) => (
+        {myReels.map((r, i) => (
           <button
             key={r.id}
             type="button"
@@ -309,167 +311,188 @@ function ReelsView() {
 }
 
 function MarketList() {
+  const { listings, setActiveModule } = useOmniStore();
+
+  if (listings.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <span className="text-4xl">🏷️</span>
+        <p className="text-sm font-semibold" style={{ color: "#19E6FF" }}>
+          Henüz ürün yok
+        </p>
+        <p className="text-xs" style={{ color: "#4A5568" }}>
+          Market'te ilk ürününü listele
+        </p>
+        <button
+          type="button"
+          onClick={() => setActiveModule("market")}
+          className="mt-2 px-5 py-2 rounded-xl text-xs font-bold"
+          style={{
+            background: "rgba(25,230,255,0.15)",
+            color: "#19E6FF",
+            border: "1px solid rgba(25,230,255,0.3)",
+          }}
+          data-ocid="profile.market.button"
+        >
+          Ürün Ekle
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="px-2 flex flex-col gap-3">
-      {MOCK_MARKET.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <span className="text-4xl">🏷️</span>
-          <p className="text-sm font-semibold" style={{ color: "#19E6FF" }}>
-            Henüz liste yok
-          </p>
-          <p className="text-xs" style={{ color: "#4A5568" }}>
-            Market'te ilk listenizi oluşturun
-          </p>
-        </div>
-      ) : (
-        MOCK_MARKET.map((item, idx) => {
-          const style = RARITY_STYLES[item.rarity];
-          return (
-            <div
-              key={item.id}
-              data-ocid={`profile.item.${idx + 1}`}
-              className="rounded-2xl overflow-hidden p-4"
-              style={{
-                background: item.gradient,
-                border: `1px solid ${item.glowColor}33`,
-                boxShadow: `0 0 20px ${item.glowColor}22`,
-              }}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-full font-bold"
-                    style={{
-                      background: style.bg,
-                      color: style.color,
-                      border: `1px solid ${style.color}44`,
-                    }}
-                  >
-                    {item.rarity}
-                  </span>
-                  <p
-                    className="text-base font-black mt-1.5"
-                    style={{ color: item.glowColor, fontFamily: "monospace" }}
-                  >
-                    {item.idValue}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold" style={{ color: "#F0F4FF" }}>
-                    {item.price.toLocaleString()}
-                  </p>
-                  <p className="text-xs" style={{ color: "#4A5568" }}>
-                    OMNI
-                  </p>
-                </div>
-              </div>
-              <p className="text-xs mb-3" style={{ color: "#A7ACBE" }}>
-                {item.description}
-              </p>
-              <button
-                type="button"
-                data-ocid={`profile.secondary_button.${idx + 1}`}
-                className="w-full py-2 rounded-xl text-xs font-bold transition-all"
+      {listings.map((item, idx) => (
+        <div
+          key={item.id}
+          data-ocid={`profile.item.${idx + 1}`}
+          className="rounded-2xl overflow-hidden p-4"
+          style={{
+            background: "#151A26",
+            border: "1px solid #2A3142",
+          }}
+        >
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <span
+                className="text-xs px-2 py-0.5 rounded-full font-bold"
                 style={{
-                  background: `${item.glowColor}22`,
-                  border: `1px solid ${item.glowColor}55`,
-                  color: item.glowColor,
+                  background: "rgba(25,230,255,0.1)",
+                  color: "#19E6FF",
+                  border: "1px solid rgba(25,230,255,0.2)",
                 }}
               >
-                Teklif Ver
-              </button>
+                {item.category}
+              </span>
+              <p
+                className="text-base font-bold mt-1.5"
+                style={{ color: "#F0F4FF" }}
+              >
+                {item.title}
+              </p>
             </div>
-          );
-        })
-      )}
-      )
+            <div className="text-right">
+              <p className="text-sm font-bold" style={{ color: "#19E6FF" }}>
+                {item.price.toLocaleString()}
+              </p>
+              <p className="text-xs" style={{ color: "#4A5568" }}>
+                OMNI
+              </p>
+            </div>
+          </div>
+          <p className="text-xs mb-3" style={{ color: "#A7ACBE" }}>
+            {item.description}
+          </p>
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[10px] px-2 py-0.5 rounded-full"
+              style={{
+                background:
+                  item.status === "active"
+                    ? "rgba(34,197,94,0.1)"
+                    : "rgba(255,255,255,0.05)",
+                color: item.status === "active" ? "#22C55E" : "#4A5568",
+                border: `1px solid ${item.status === "active" ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.08)"}`,
+              }}
+            >
+              {item.status === "active" ? "Aktif" : "Pasif"}
+            </span>
+            <span className="text-[10px]" style={{ color: "#4A5568" }}>
+              ❤️ {item.likes}
+            </span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
 function RidesList() {
+  const { rideHistory } = useOmniStore();
+
+  if (rideHistory.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <span className="text-4xl">🚗</span>
+        <p className="text-sm font-semibold" style={{ color: "#19E6FF" }}>
+          Henüz sürüş yok
+        </p>
+        <p className="text-xs" style={{ color: "#4A5568" }}>
+          İlk sürüşünden sonra burada görünecek
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="px-2 flex flex-col gap-3">
-      {MOCK_RIDES.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <span className="text-4xl">🚗</span>
-          <p className="text-sm font-semibold" style={{ color: "#19E6FF" }}>
-            Henüz sürüş yok
-          </p>
-          <p className="text-xs" style={{ color: "#4A5568" }}>
-            İlk sürüşünden sonra burada görünecek
-          </p>
-        </div>
-      ) : (
-        MOCK_RIDES.map((ride, idx) => (
-          <div
-            key={ride.id}
-            data-ocid={`profile.item.${idx + 1}`}
-            className="rounded-2xl p-4"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{ background: "#19E6FF" }}
-                  />
-                  <span
-                    className="text-xs font-medium"
-                    style={{ color: "#F0F4FF" }}
-                  >
-                    {ride.from}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{ background: "#B56BFF" }}
-                  />
-                  <span
-                    className="text-xs font-medium"
-                    style={{ color: "#F0F4FF" }}
-                  >
-                    {ride.to}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right">
-                <p
-                  className="text-base font-black"
-                  style={{ color: "#19E6FF" }}
+      {rideHistory.map((ride, idx) => (
+        <div
+          key={ride.id}
+          data-ocid={`profile.item.${idx + 1}`}
+          className="rounded-2xl p-4"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.07)",
+          }}
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: "#19E6FF" }}
+                />
+                <span
+                  className="text-xs font-medium"
+                  style={{ color: "#F0F4FF" }}
                 >
-                  ₺{ride.price}
-                </p>
-                <div className="flex items-center justify-end gap-0.5">
-                  {STAR_INDICES.map((i) => (
-                    <Star
-                      key={`star-${i}`}
-                      size={9}
-                      fill={i < ride.rating ? "#FFB347" : "transparent"}
-                      style={{
-                        color: i < ride.rating ? "#FFB347" : "#2D3748",
-                      }}
-                    />
-                  ))}
-                </div>
+                  {ride.origin}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: "#B56BFF" }}
+                />
+                <span
+                  className="text-xs font-medium"
+                  style={{ color: "#F0F4FF" }}
+                >
+                  {ride.destination}
+                </span>
               </div>
             </div>
-            <div
-              className="flex items-center gap-3 text-[10px]"
-              style={{ color: "#4A5568" }}
-            >
-              <span>📅 {ride.date}</span>
-              <span>⏱ {ride.duration}</span>
-              <span>📍 {ride.distanceKm} km</span>
+            <div className="text-right">
+              <p className="text-base font-black" style={{ color: "#19E6FF" }}>
+                ₺{ride.price.toFixed(0)}
+              </p>
+              <div className="flex items-center justify-end gap-0.5">
+                {STAR_INDICES.map((i) => (
+                  <Star
+                    key={`star-${i}`}
+                    size={9}
+                    fill={i < ride.passengerRating ? "#FFB347" : "transparent"}
+                    style={{
+                      color: i < ride.passengerRating ? "#FFB347" : "#2D3748",
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-        ))
-      )}
+          <div
+            className="flex items-center gap-3 text-[10px]"
+            style={{ color: "#4A5568" }}
+          >
+            <span>
+              📅 {new Date(ride.completedAt).toLocaleDateString("tr-TR")}
+            </span>
+            <span>⏱ {ride.durationMinutes} dk</span>
+            <span>📍 {ride.distanceKm} km</span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -483,8 +506,10 @@ function PostViewer({
   index: number;
   onClose: () => void;
 }) {
+  const { socialPosts, myId } = useOmniStore();
+  const myPosts = socialPosts.filter((p) => p.authorId === (myId ?? ""));
   const [current, setCurrent] = useState(index);
-  const post = MOCK_POSTS[current];
+  const post = myPosts[current];
 
   if (!post) return null;
 
@@ -505,7 +530,7 @@ function PostViewer({
           ✕
         </button>
         <span className="text-xs" style={{ color: "#4A5568" }}>
-          {current + 1} / {MOCK_POSTS.length}
+          {current + 1} / {myPosts.length}
         </span>
         <button type="button">
           <MoreHorizontal size={20} style={{ color: "#A7ACBE" }} />
@@ -514,13 +539,32 @@ function PostViewer({
 
       {/* Image */}
       <div className="flex-1 flex items-center">
-        <div
-          className="w-full"
-          style={{
-            aspectRatio: "1",
-            background: post.gradient,
-          }}
-        />
+        <div className="w-full" style={{ aspectRatio: "1" }}>
+          {post.mediaUrl ? (
+            post.mediaType === "video" ? (
+              <video
+                src={post.mediaUrl}
+                className="w-full h-full object-cover"
+                controls
+              >
+                <track kind="captions" />
+              </video>
+            ) : (
+              <img
+                src={post.mediaUrl}
+                alt="post"
+                className="w-full h-full object-cover"
+              />
+            )
+          ) : (
+            <div
+              className="w-full h-full flex items-center justify-center text-6xl"
+              style={{ background: "#1E2436" }}
+            >
+              {post.mood || "🔮"}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Actions */}
@@ -533,7 +577,7 @@ function PostViewer({
         <p className="text-sm font-semibold text-white mb-0.5">
           {post.likes} beğeni
         </p>
-        <p className="text-sm text-white">{post.caption}</p>
+        <p className="text-sm text-white">{post.content}</p>
       </div>
 
       {/* Prev / Next */}
@@ -554,10 +598,8 @@ function PostViewer({
         <button
           type="button"
           data-ocid="profile.pagination_next"
-          disabled={current === MOCK_POSTS.length - 1}
-          onClick={() =>
-            setCurrent((c) => Math.min(MOCK_POSTS.length - 1, c + 1))
-          }
+          disabled={current === myPosts.length - 1}
+          onClick={() => setCurrent((c) => Math.min(myPosts.length - 1, c + 1))}
           className="px-6 py-2 rounded-xl text-sm font-semibold disabled:opacity-30"
           style={{
             background: "rgba(255,255,255,0.08)",
@@ -772,7 +814,20 @@ function SubSectionPanel({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ProfileModule() {
-  const { myId, displayName, tokenBalance, setActiveModule } = useOmniStore();
+  const {
+    myId,
+    displayName,
+    tokenBalance,
+    setActiveModule,
+    userTrustScore,
+    socialPosts,
+    profileAvatarUrl,
+    setProfileAvatarUrl,
+    profileBio,
+    setProfileBio,
+    followers,
+    following,
+  } = useOmniStore();
 
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [activeTab, setActiveTab] = useState<
@@ -780,6 +835,7 @@ export function ProfileModule() {
   >("posts");
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [subSection, setSubSection] = useState<SubSection>(null);
+  const [editingBio, setEditingBio] = useState(false);
 
   const { actor } = useActor();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -794,6 +850,20 @@ export function ProfileModule() {
 
   const profileId = myId ?? "+777 3821 4490";
   const name = displayName !== "Anonymous" ? displayName : null;
+  const trustDisplay = ((userTrustScore ?? 80) / 20).toFixed(1);
+  const myPostCount = socialPosts.filter(
+    (p) => p.authorId === (myId ?? ""),
+  ).length;
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setProfileAvatarUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const TABS = [
     { id: "posts" as const, label: "Gönderiler", icon: Grid3X3 },
@@ -878,7 +948,15 @@ export function ProfileModule() {
                   margin: "-2px",
                 }}
               />
-              🌟
+              {profileAvatarUrl ? (
+                <img
+                  src={profileAvatarUrl}
+                  alt="avatar"
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                <>🌟</>
+              )}
             </div>
             {/* Online dot */}
             <div
@@ -888,6 +966,24 @@ export function ProfileModule() {
                 border: "2px solid #06070B",
                 boxShadow: "0 0 6px #22C55E",
               }}
+            />
+            {/* Camera upload button */}
+            <label
+              htmlFor="avatar-upload"
+              className="absolute top-0 right-0 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer"
+              style={{
+                background: "rgba(25,230,255,0.8)",
+                border: "1.5px solid #06070B",
+              }}
+            >
+              <span style={{ fontSize: 10 }}>📷</span>
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              id="avatar-upload"
+              className="hidden"
+              onChange={handleAvatarUpload}
             />
           </div>
 
@@ -904,14 +1000,35 @@ export function ProfileModule() {
             >
               {profileId}
             </p>
-            <p
-              className="text-xs mt-1 leading-snug"
-              style={{ color: "#A7ACBE" }}
-            >
-              {isAnonymous
-                ? "Anonim modda gizleniyor 👻"
-                : "Şehri gece gözlemliyorum. Kod yazıyorum, sürüş yapıyorum. 🌙"}
-            </p>
+            {isAnonymous ? (
+              <p
+                className="text-xs mt-1 leading-snug"
+                style={{ color: "#A7ACBE" }}
+              >
+                Anonim modda gizleniyor 👻
+              </p>
+            ) : editingBio ? (
+              <input
+                className="text-xs mt-1 w-full bg-transparent border-b outline-none"
+                style={{ color: "#A7ACBE", borderColor: "#19E6FF44" }}
+                value={profileBio}
+                placeholder="Bio ekle..."
+                onChange={(e) => setProfileBio(e.target.value)}
+                onBlur={() => setEditingBio(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") setEditingBio(false);
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                className="text-xs mt-1 leading-snug text-left w-full"
+                style={{ color: profileBio ? "#A7ACBE" : "#4A5568" }}
+                onClick={() => setEditingBio(true)}
+              >
+                {profileBio || "Bio ekle... ✏️"}
+              </button>
+            )}
 
             {/* Badges */}
             <div className="flex items-center gap-2 mt-2">
@@ -923,7 +1040,7 @@ export function ProfileModule() {
                   border: "1px solid rgba(25,230,255,0.2)",
                 }}
               >
-                ✓ Güven 4.8
+                ✓ Güven {trustDisplay}
               </span>
               <span
                 className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
@@ -957,17 +1074,17 @@ export function ProfileModule() {
             border: "1px solid rgba(255,255,255,0.06)",
           }}
         >
-          <StatItem value="47" label="Gönderi" />
+          <StatItem value={String(myPostCount)} label="Gönderi" />
           <div
             className="w-px h-8"
             style={{ background: "rgba(255,255,255,0.06)" }}
           />
-          <StatItem value="1.2K" label="Takipçi" />
+          <StatItem value={String(followers)} label="Takipçi" />
           <div
             className="w-px h-8"
             style={{ background: "rgba(255,255,255,0.06)" }}
           />
-          <StatItem value="384" label="Takip" />
+          <StatItem value={String(following)} label="Takip" />
         </div>
 
         {/* Action buttons */}

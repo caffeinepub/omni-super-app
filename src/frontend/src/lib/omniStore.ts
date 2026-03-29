@@ -71,6 +71,30 @@ function generateFreshDatingProfiles(): DatingProfile[] {
   }));
 }
 
+function generateNearbyDrivers(): NearbyDriver[] {
+  const vehicles = [
+    "Toyota Corolla",
+    "Honda Civic",
+    "Renault Megane",
+    "Fiat Egea",
+    "Volkswagen Golf",
+  ];
+  const emojis = ["🚗", "🚙", "🚘", "🏎️", "🚐"];
+  return Array.from({ length: 3 }, (_, i) => {
+    const d1 = Math.floor(1000 + Math.random() * 8999);
+    const d2 = Math.floor(1000 + Math.random() * 8999);
+    return {
+      id: `nd_${Date.now()}_${i}`,
+      anonymousId: `+777 ${d1} ${d2}`,
+      emoji: emojis[i % emojis.length],
+      rating: +(4.3 + Math.random() * 0.7).toFixed(1),
+      distanceKm: +(0.3 + Math.random() * 2).toFixed(1),
+      vehicle: vehicles[i % vehicles.length],
+      responseSpeed: Math.floor(600 + Math.random() * 1800),
+    };
+  });
+}
+
 export type RideState =
   | "REQUESTED"
   | "DRIVER_ASSIGNED"
@@ -159,7 +183,6 @@ export type Module =
   | "identity"
   | "engine"
   | "dating"
-  | "home"
   | "profile";
 
 export interface CallLog {
@@ -209,6 +232,38 @@ export interface DatingMatch {
   tokensSent: number;
   isActive: boolean;
   expiresAt?: number;
+}
+
+export interface SocialPost {
+  id: string;
+  authorId: string;
+  authorEmoji: string;
+  content: string;
+  mood: string;
+  privacy: "PUBLIC" | "FRIENDS" | "ANON" | "GHOST";
+  likes: number;
+  comments: number;
+  shares: number;
+  rideTag?: boolean;
+  time: string;
+  liked: boolean;
+  mediaUrl?: string;
+  mediaType?: "image" | "video";
+}
+
+export interface SocialReel {
+  id: string;
+  authorId: string;
+  authorEmoji: string;
+  mood: string;
+  description: string;
+  likes: number;
+  comments: number;
+  views: number;
+  location?: string;
+  rideTag?: boolean;
+  gradient: string;
+  liked: boolean;
 }
 
 interface OmniState {
@@ -262,6 +317,22 @@ interface OmniState {
   viewStory: (storyId: string) => void;
   selectedInterests: string[];
   setSelectedInterests: (interests: string[]) => void;
+
+  // Social posts & reels
+  socialPosts: SocialPost[];
+  socialReels: SocialReel[];
+  addSocialPost: (post: SocialPost) => void;
+  addSocialReel: (reel: SocialReel) => void;
+  deleteSocialPost: (postId: string) => void;
+  likeSocialPost: (postId: string) => void;
+
+  // Profile customization
+  profileAvatarUrl: string | null;
+  setProfileAvatarUrl: (url: string | null) => void;
+  profileBio: string;
+  setProfileBio: (bio: string) => void;
+  followers: number;
+  following: number;
 
   // Ride
   rideRole: "passenger" | "driver";
@@ -400,6 +471,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       setActiveModule: (m) => set({ activeModule: m }),
 
       completeOnboarding: (id, name) => {
+        localStorage.setItem("omni-permanent-id", id);
         const identity = get().createIdentity("permanent", name, "🌟");
         set({
           myId: id,
@@ -457,9 +529,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
         if (existing) return existing.id;
         const newConv: Conversation = {
           id: `c${Date.now()}`,
-          participants: [
-            ...new Set([participantId, ...(get().myId ? [get().myId!] : [])]),
-          ],
+          participants: [...new Set([participantId, get().myId ?? "me"])],
           messages: [],
           isGroup: false,
           isChannel: false,
@@ -552,6 +622,34 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       selectedInterests: [],
       setSelectedInterests: (interests) =>
         set({ selectedInterests: interests }),
+      socialPosts: [],
+      socialReels: [],
+      addSocialPost: (post) =>
+        set((s) => ({ socialPosts: [post, ...s.socialPosts] })),
+      addSocialReel: (reel) =>
+        set((s) => ({ socialReels: [reel, ...s.socialReels] })),
+      deleteSocialPost: (postId) =>
+        set((s) => ({
+          socialPosts: s.socialPosts.filter((p) => p.id !== postId),
+        })),
+      likeSocialPost: (postId) =>
+        set((s) => ({
+          socialPosts: s.socialPosts.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  likes: p.liked ? p.likes - 1 : p.likes + 1,
+                  liked: !p.liked,
+                }
+              : p,
+          ),
+        })),
+      profileAvatarUrl: null,
+      setProfileAvatarUrl: (url) => set({ profileAvatarUrl: url }),
+      profileBio: "",
+      setProfileBio: (bio) => set({ profileBio: bio }),
+      followers: 0,
+      following: 0,
 
       addStory: (content, emoji) => {
         const state = get();
@@ -619,35 +717,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
           set({ incomingRideRequest: null });
         }
       },
-      nearbyDrivers: [
-        {
-          id: "nd1",
-          anonymousId: "+777 4421 8830",
-          emoji: "🚗",
-          rating: 4.9,
-          distanceKm: 0.4,
-          vehicle: "Toyota Corolla",
-          responseSpeed: 850,
-        },
-        {
-          id: "nd2",
-          anonymousId: "+777 7731 2210",
-          emoji: "🚙",
-          rating: 4.7,
-          distanceKm: 0.8,
-          vehicle: "Honda Civic",
-          responseSpeed: 1200,
-        },
-        {
-          id: "nd3",
-          anonymousId: "+777 2209 5541",
-          emoji: "🚘",
-          rating: 4.5,
-          distanceKm: 1.3,
-          vehicle: "Renault Fluence",
-          responseSpeed: 2100,
-        },
-      ],
+      nearbyDrivers: generateNearbyDrivers(),
       incomingRideRequest: null,
       driverEarnings: 0,
       activeRide: null,
@@ -845,7 +915,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
           id: `t${Date.now()}`,
           type: "transfer",
           amount: -amount,
-          description: `${amount} OMNI → ${targetId} (simülasyon)`,
+          description: `${amount} OMNI → ${targetId}`,
           timestamp: Date.now(),
         };
         set((s) => ({
@@ -1266,10 +1336,14 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       setDatingActiveMatch: (id) => set({ datingActiveMatchId: id }),
 
       refreshDatingProfiles: () => {
-        set({
+        const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        set((s) => ({
           datingProfiles: generateFreshDatingProfiles(),
           datingDailySwipes: 0,
-        });
+          datingMatches: s.datingMatches.filter(
+            (m) => m.matchedAt > sevenDaysAgo,
+          ),
+        }));
         get().earnTokens(5, "Yeni profiller yüklendi: +5 OMNI");
       },
 
@@ -1290,7 +1364,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
     }),
     {
       name: "omni-store",
-      version: 4,
+      version: 5,
       migrate: (persistedState: unknown, fromVersion: number) => {
         const state = persistedState as Record<string, unknown>;
         if (fromVersion < 4) {
@@ -1339,6 +1413,20 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
             ).filter((t) => t.type === "transfer" || t.type === "earn");
           }
         }
+        if (fromVersion < 5) {
+          state.socialPosts = [];
+          state.socialReels = [];
+          state.profileAvatarUrl = null;
+          state.profileBio = "";
+          state.followers = 0;
+          state.following = 0;
+        }
+        // Always restore permanent ID if it exists
+        const permanentId = localStorage.getItem("omni-permanent-id");
+        if (permanentId && !state.myId) {
+          state.myId = permanentId;
+          state.isOnboarded = true;
+        }
         return state;
       },
       partialize: (state) => ({
@@ -1375,6 +1463,12 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
         driverOnline: state.driverOnline,
         rideHistory: state.rideHistory,
         driverEarnings: state.driverEarnings,
+        socialPosts: state.socialPosts,
+        socialReels: state.socialReels,
+        profileAvatarUrl: state.profileAvatarUrl,
+        profileBio: state.profileBio,
+        followers: state.followers,
+        following: state.following,
       }),
     },
   ),

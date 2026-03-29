@@ -114,7 +114,7 @@ export function BottomNav() {
         onClick={() => handleNav(item.module)}
         className="relative flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-xl transition-all"
         style={{
-          minWidth: "34px",
+          minWidth: "28px",
           background: isActive
             ? isDating
               ? "rgba(255,79,123,0.07)"

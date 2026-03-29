@@ -56,8 +56,8 @@ const QR_CELLS = Array.from({ length: 64 }, (_, i) => ({
 
 function formatTime(ts: number): string {
   const diff = Date.now() - ts;
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}d`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}s`;
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}dk`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}sa`;
   return `${Math.floor(diff / 86400000)}g`;
 }
 
