@@ -78,8 +78,6 @@ const SMART_REPLIES = [
   "👀",
 ];
 
-const ONLINE_CONV_IDS = ["c1", "c4"];
-
 const AI_RESPONSES: Record<string, string> = {
   hello: "Hey! I'm OMNI AI 🤖 How can I help you?",
   hi: "Hello! Ask me anything.",
@@ -298,11 +296,15 @@ export function ChatModule() {
     privacyMode,
     updatePrivacyMode,
     friends,
+    addFriendById,
+    removeFriend,
   } = useOmniStore();
 
   const [input, setInput] = useState("");
   const [destructMins, setDestructMins] = useState(0);
   const [showNewChat, setShowNewChat] = useState(false);
+  const [addFriendInput, setAddFriendInput] = useState("");
+  const [friendToDelete, setFriendToDelete] = useState<string | null>(null);
   const [showNewGroup, setShowNewGroup] = useState(false);
   const [newChatId, setNewChatId] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
@@ -348,9 +350,9 @@ export function ChatModule() {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
-  const [callTimerInterval, setCallTimerInterval] = useState<ReturnType<
-    typeof setInterval
-  > | null>(null);
+  const callTimerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
   // AI Assistant
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([
@@ -446,12 +448,12 @@ export function ChatModule() {
           prev ? { ...prev, duration: prev.duration + 1 } : null,
         );
       }, 1000);
-      setCallTimerInterval(interval);
+      callTimerIntervalRef.current = interval;
       return () => clearInterval(interval);
     }
-    if (callTimerInterval) {
-      clearInterval(callTimerInterval);
-      setCallTimerInterval(null);
+    if (callTimerIntervalRef.current) {
+      clearInterval(callTimerIntervalRef.current);
+      callTimerIntervalRef.current = null;
     }
   }, [callState?.status]);
 
@@ -638,7 +640,8 @@ export function ChatModule() {
   };
 
   const endCall = () => {
-    if (callTimerInterval) clearInterval(callTimerInterval);
+    if (callTimerIntervalRef.current)
+      clearInterval(callTimerIntervalRef.current);
     if (localStreamRef.current) {
       for (const t of localStreamRef.current.getTracks()) t.stop();
       localStreamRef.current = null;
@@ -922,160 +925,251 @@ export function ChatModule() {
 
         <div className="flex-1 overflow-y-auto scrollbar-hide">
           {activeTab === "friends" ? (
-            friends.length === 0 ? (
-              <div
-                className="flex flex-col items-center justify-center h-full gap-3 px-6 text-center"
-                data-ocid="chat.friends.empty_state"
-              >
-                <div className="text-4xl mb-2">👥</div>
-                <p
-                  className="text-sm font-semibold"
-                  style={{ color: "#19E6FF" }}
-                >
-                  Henüz arkadaş eklemedin
-                </p>
-                <p className="text-xs" style={{ color: "#4A5568" }}>
-                  Arkadaş eklemek için Profil → Arkadaşlar modülüne git ve +777
-                  ID ile ekle
-                </p>
-              </div>
-            ) : (
-              <div>
-                {friends.map((friend: Friend, idx: number) => (
-                  <div
-                    key={friend.id}
-                    className="flex items-center gap-3 px-4 py-3 transition-colors"
-                    style={{ borderBottom: "1px solid #0E1320" }}
-                    data-ocid={`chat.friends.item.${idx + 1}`}
+            <div className="flex flex-col h-full">
+              {/* Add Friend Input */}
+              <div className="p-3 border-b" style={{ borderColor: "#1A2030" }}>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={addFriendInput}
+                    onChange={(e) => setAddFriendInput(e.target.value)}
+                    placeholder="+777 XXXX XXXX"
+                    data-ocid="chat.friends.add.input"
+                    className="flex-1 px-3 py-2 rounded-xl text-sm outline-none"
+                    style={{
+                      background: "#151A26",
+                      border: "1px solid #2A3142",
+                      color: "#F2F4FF",
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const raw = addFriendInput.trim();
+                        const match = raw.replace(/\s+/g, " ").trim();
+                        const formatted = match.startsWith("+777 ")
+                          ? match
+                          : `+777 ${match.replace(/^\+?777\s*/, "")}`;
+                        if (!/^\+777 \d{4} \d{4}$/.test(formatted)) {
+                          toast.error("Format: +777 XXXX XXXX");
+                          return;
+                        }
+                        const result = addFriendById(
+                          formatted as import("@/lib/mockData").AnonymousID,
+                        );
+                        if (result === "added") {
+                          toast.success(
+                            `${formatted} arkadaş listesine eklendi! ✅`,
+                          );
+                          setAddFriendInput("");
+                        } else if (result === "already_friend")
+                          toast.error("Bu kişi zaten arkadaşın");
+                        else toast.error("Kendinizi ekleyemezsiniz");
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    data-ocid="chat.friends.add.button"
+                    className="px-3 py-2 rounded-xl text-sm font-bold"
+                    style={{
+                      background: "rgba(25,230,255,0.15)",
+                      color: "#19E6FF",
+                      border: "1px solid rgba(25,230,255,0.3)",
+                    }}
+                    onClick={() => {
+                      const raw = addFriendInput.trim();
+                      const match = raw.replace(/\s+/g, " ").trim();
+                      const formatted = match.startsWith("+777 ")
+                        ? match
+                        : `+777 ${match.replace(/^\+?777\s*/, "")}`;
+                      if (!/^\+777 \d{4} \d{4}$/.test(formatted)) {
+                        toast.error("Format: +777 XXXX XXXX");
+                        return;
+                      }
+                      const result = addFriendById(
+                        formatted as import("@/lib/mockData").AnonymousID,
+                      );
+                      if (result === "added") {
+                        toast.success(
+                          `${formatted} arkadaş listesine eklendi! ✅`,
+                        );
+                        setAddFriendInput("");
+                      } else if (result === "already_friend")
+                        toast.error("Bu kişi zaten arkadaşın");
+                      else toast.error("Kendinizi ekleyemezsiniz");
+                    }}
                   >
+                    Ekle
+                  </button>
+                </div>
+              </div>
+              {friends.length === 0 ? (
+                <div
+                  className="flex flex-col items-center justify-center flex-1 gap-3 px-6 text-center"
+                  data-ocid="chat.friends.empty_state"
+                >
+                  <div className="text-4xl mb-2">👥</div>
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ color: "#19E6FF" }}
+                  >
+                    Henüz arkadaş eklemedin
+                  </p>
+                  <p className="text-xs" style={{ color: "#4A5568" }}>
+                    +777 ID girerek arkadaş ekle 👆
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-y-auto flex-1 scrollbar-hide">
+                  {friends.map((friend: Friend, idx: number) => (
                     <div
-                      className="w-11 h-11 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0"
-                      style={{
-                        background:
-                          "linear-gradient(135deg,#19E6FF22,#19E6FF44)",
-                        color: "#19E6FF",
-                        border: "1px solid #19E6FF44",
-                      }}
+                      key={friend.id}
+                      className="flex items-center gap-3 px-4 py-3 transition-colors"
+                      style={{ borderBottom: "1px solid #0E1320" }}
+                      data-ocid={`chat.friends.item.${idx + 1}`}
                     >
-                      {friend.friendId.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="text-sm font-semibold truncate"
-                          style={{ color: "#E2E8F0" }}
+                      <div
+                        className="w-11 h-11 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0"
+                        style={{
+                          background:
+                            "linear-gradient(135deg,#19E6FF22,#19E6FF44)",
+                          color: "#19E6FF",
+                          border: "1px solid #19E6FF44",
+                        }}
+                      >
+                        {friend.friendId.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="text-sm font-semibold truncate"
+                            style={{ color: "#E2E8F0" }}
+                          >
+                            {friend.friendId}
+                          </span>
+                          <span
+                            className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0"
+                            style={{
+                              background: "rgba(25,230,255,0.1)",
+                              color: "#19E6FF",
+                              border: "1px solid rgba(25,230,255,0.2)",
+                            }}
+                          >
+                            {friend.friendScore} ⭐
+                          </span>
+                        </div>
+                        <p
+                          className="text-xs truncate mt-0.5"
+                          style={{ color: "#4A5568" }}
                         >
-                          {friend.friendId}
-                        </span>
-                        <span
-                          className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0"
+                          {friend.mood}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          type="button"
+                          className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
                           style={{
-                            background: "rgba(25,230,255,0.1)",
+                            background: "rgba(25,230,255,0.12)",
                             color: "#19E6FF",
-                            border: "1px solid rgba(25,230,255,0.2)",
+                            border: "1px solid rgba(25,230,255,0.3)",
+                          }}
+                          data-ocid={`chat.friends.button.${idx + 1}`}
+                          title="Mesaj"
+                          onClick={() => {
+                            const existing = conversations.find(
+                              (c) =>
+                                !c.isGroup &&
+                                !c.isChannel &&
+                                c.participants.includes(friend.friendId),
+                            );
+                            if (existing) {
+                              setActiveConversation(existing.id);
+                              setActiveTab("dms");
+                            } else {
+                              const id = createConversation(friend.friendId);
+                              setActiveConversation(id);
+                              setActiveTab("dms");
+                            }
                           }}
                         >
-                          {friend.friendScore} ⭐
-                        </span>
+                          <Send size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                          style={{
+                            background: "rgba(47,245,199,0.12)",
+                            color: "#2FF5C7",
+                            border: "1px solid rgba(47,245,199,0.3)",
+                          }}
+                          data-ocid={`chat.friends.voice.${idx + 1}`}
+                          title="Sesli Arama"
+                          onClick={() => {
+                            const existing = conversations.find(
+                              (c) =>
+                                !c.isGroup &&
+                                !c.isChannel &&
+                                c.participants.includes(friend.friendId),
+                            );
+                            if (existing) {
+                              setActiveConversation(existing.id);
+                            } else {
+                              const id = createConversation(friend.friendId);
+                              setActiveConversation(id);
+                            }
+                            startCall("voice", friend.friendId);
+                          }}
+                        >
+                          <Phone size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                          style={{
+                            background: "rgba(181,107,255,0.12)",
+                            color: "#B56BFF",
+                            border: "1px solid rgba(181,107,255,0.3)",
+                          }}
+                          data-ocid={`chat.friends.video.${idx + 1}`}
+                          title="Görüntülü Arama"
+                          onClick={() => {
+                            const existing = conversations.find(
+                              (c) =>
+                                !c.isGroup &&
+                                !c.isChannel &&
+                                c.participants.includes(friend.friendId),
+                            );
+                            if (existing) {
+                              setActiveConversation(existing.id);
+                            } else {
+                              const id = createConversation(friend.friendId);
+                              setActiveConversation(id);
+                            }
+                            startCall("video", friend.friendId);
+                          }}
+                        >
+                          <Video size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                          style={{
+                            background: "rgba(255,79,79,0.12)",
+                            color: "#FF4F4F",
+                            border: "1px solid rgba(255,79,79,0.3)",
+                          }}
+                          data-ocid={`chat.friends.delete_button.${idx + 1}`}
+                          title="Arkadaşı Sil"
+                          onClick={() => setFriendToDelete(friend.friendId)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
-                      <p
-                        className="text-xs truncate mt-0.5"
-                        style={{ color: "#4A5568" }}
-                      >
-                        {friend.mood}
-                      </p>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        type="button"
-                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                        style={{
-                          background: "rgba(25,230,255,0.12)",
-                          color: "#19E6FF",
-                          border: "1px solid rgba(25,230,255,0.3)",
-                        }}
-                        data-ocid={`chat.friends.button.${idx + 1}`}
-                        title="Mesaj"
-                        onClick={() => {
-                          const existing = conversations.find(
-                            (c) =>
-                              !c.isGroup &&
-                              !c.isChannel &&
-                              c.participants.includes(friend.friendId),
-                          );
-                          if (existing) {
-                            setActiveConversation(existing.id);
-                            setActiveTab("dms");
-                          } else {
-                            const id = createConversation(friend.friendId);
-                            setActiveConversation(id);
-                            setActiveTab("dms");
-                          }
-                        }}
-                      >
-                        <Send size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                        style={{
-                          background: "rgba(47,245,199,0.12)",
-                          color: "#2FF5C7",
-                          border: "1px solid rgba(47,245,199,0.3)",
-                        }}
-                        data-ocid={`chat.friends.voice.${idx + 1}`}
-                        title="Sesli Arama"
-                        onClick={() => {
-                          const existing = conversations.find(
-                            (c) =>
-                              !c.isGroup &&
-                              !c.isChannel &&
-                              c.participants.includes(friend.friendId),
-                          );
-                          if (existing) {
-                            setActiveConversation(existing.id);
-                          } else {
-                            const id = createConversation(friend.friendId);
-                            setActiveConversation(id);
-                          }
-                          startCall("voice", friend.friendId);
-                        }}
-                      >
-                        <Phone size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                        style={{
-                          background: "rgba(181,107,255,0.12)",
-                          color: "#B56BFF",
-                          border: "1px solid rgba(181,107,255,0.3)",
-                        }}
-                        data-ocid={`chat.friends.video.${idx + 1}`}
-                        title="Görüntülü Arama"
-                        onClick={() => {
-                          const existing = conversations.find(
-                            (c) =>
-                              !c.isGroup &&
-                              !c.isChannel &&
-                              c.participants.includes(friend.friendId),
-                          );
-                          if (existing) {
-                            setActiveConversation(existing.id);
-                          } else {
-                            const id = createConversation(friend.friendId);
-                            setActiveConversation(id);
-                          }
-                          startCall("video", friend.friendId);
-                        }}
-                      >
-                        <Video size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
+                  ))}
+                </div>
+              )}
+            </div>
           ) : filteredConvs.length === 0 ? (
             <div
               className="flex flex-col items-center justify-center h-full gap-3"
@@ -1100,7 +1194,7 @@ export function ChatModule() {
           ) : (
             filteredConvs.map((conv, idx) => {
               const title = conv.name || conv.participants[0] || "Unknown";
-              const isOnline = ONLINE_CONV_IDS.includes(conv.id);
+              const isOnline = false;
               const lastMsg = conv.lastMessage ?? "";
               const displayLast =
                 conv.isGroup && conv.messages.length > 0
@@ -1197,6 +1291,70 @@ export function ChatModule() {
         </div>
 
         {/* New Chat Modal */}
+        {/* Delete Friend Confirmation */}
+        {friendToDelete && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.75)" }}
+            data-ocid="chat.friends.delete.dialog"
+          >
+            <div
+              className="mx-4 w-full max-w-sm rounded-2xl p-6"
+              style={{ background: "#0E1320", border: "1px solid #2A3142" }}
+            >
+              <div className="text-center mb-4">
+                <div className="text-3xl mb-2">🗑️</div>
+                <h3
+                  className="font-bold text-base"
+                  style={{ color: "#F2F4FF" }}
+                >
+                  Arkadaşı Sil
+                </h3>
+                <p className="text-xs mt-1" style={{ color: "#A7ACBE" }}>
+                  <span style={{ color: "#19E6FF" }}>{friendToDelete}</span>{" "}
+                  arkadaş listesinden kaldırılsın mı?
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  data-ocid="chat.friends.delete.cancel_button"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                  style={{
+                    background: "rgba(167,172,190,0.1)",
+                    color: "#A7ACBE",
+                    border: "1px solid #2A3142",
+                  }}
+                  onClick={() => setFriendToDelete(null)}
+                >
+                  İptal
+                </button>
+                <button
+                  type="button"
+                  data-ocid="chat.friends.delete.confirm_button"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                  style={{
+                    background: "rgba(255,79,79,0.15)",
+                    color: "#FF4F4F",
+                    border: "1px solid rgba(255,79,79,0.3)",
+                  }}
+                  onClick={() => {
+                    if (friendToDelete) {
+                      removeFriend(
+                        friendToDelete as import("@/lib/mockData").AnonymousID,
+                      );
+                      toast.success("Arkadaş silindi");
+                      setFriendToDelete(null);
+                    }
+                  }}
+                >
+                  Sil
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {showNewChat && (
           <div
             className="fixed inset-0 z-50 flex items-end justify-center"
@@ -1323,7 +1481,7 @@ export function ChatModule() {
 
   // ─── Chat Thread ─────────────────────────────────────────────────────────────
   const title = activeConv?.name || activeConv?.participants[0] || "Unknown";
-  const isOnlineConv = ONLINE_CONV_IDS.includes(activeConversationId);
+  const isOnlineConv = false;
 
   return (
     <div
@@ -1772,6 +1930,39 @@ export function ChatModule() {
                           </button>
                         )}
                       </div>
+                    ) : msg.content.startsWith("__LOCATION__") ? (
+                      (() => {
+                        const parts = msg.content.split("__");
+                        const lat = parts[2];
+                        const lng = parts[3];
+                        return (
+                          <a
+                            href={`https://www.google.com/maps?q=${lat},${lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-2 py-1.5 rounded-xl"
+                            style={{
+                              background: "rgba(255,79,79,0.1)",
+                              border: "1px solid rgba(255,79,79,0.25)",
+                              color: "#FF4F4F",
+                              textDecoration: "none",
+                            }}
+                          >
+                            <MapPin size={14} />
+                            <div>
+                              <p className="text-xs font-bold">
+                                Konum Paylaşıldı
+                              </p>
+                              <p
+                                className="text-[10px]"
+                                style={{ color: "#A7ACBE" }}
+                              >
+                                {lat}, {lng}
+                              </p>
+                            </div>
+                          </a>
+                        );
+                      })()
                     ) : (
                       <span>
                         {showTranslation ? msg.translatedContent : msg.content}
@@ -2285,7 +2476,16 @@ export function ChatModule() {
           ) : (
             <button
               type="button"
-              onClick={() => setIsRecording(true)}
+              onClick={() => {
+                if (!isRecording) {
+                  navigator.mediaDevices
+                    ?.getUserMedia({ audio: true })
+                    .then(() => setIsRecording(true))
+                    .catch(() => setIsRecording(true));
+                } else {
+                  setIsRecording(false);
+                }
+              }}
               className="p-2.5 rounded-xl flex-shrink-0"
               style={{ background: "#151A26", border: "1px solid #2A3142" }}
               data-ocid="chat.button"
@@ -2397,7 +2597,24 @@ export function ChatModule() {
                   color: "#FF4F4F",
                   action: () => {
                     setShowMediaSheet(false);
-                    toast.info("Location sharing enabled");
+                    if (!activeConversationId) return;
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        const lat = pos.coords.latitude.toFixed(5);
+                        const lng = pos.coords.longitude.toFixed(5);
+                        sendMessage(
+                          activeConversationId,
+                          `__LOCATION__${lat}__${lng}__`,
+                          undefined,
+                          false,
+                          undefined,
+                          replyTo?.id,
+                        );
+                        setReplyTo(null);
+                        toast.success("Konum paylaşıldı 📍");
+                      },
+                      () => toast.error("Konum erişimi reddedildi"),
+                    );
                   },
                 },
                 {

@@ -183,20 +183,20 @@ function WalletTab() {
   );
   const [sendToId, setSendToId] = useState("");
   const [sendAmount, setSendAmount] = useState("");
-  const [principalId, setPrincipalId] = useState("");
+  const [recipientId777, setRecipientId777] = useState("");
   const [useICP, setUseICP] = useState(false);
 
   const handleSend = async () => {
     const amount = Number.parseInt(sendAmount);
     if (!amount || amount <= 0) return;
 
-    if (useICP && principalId.trim()) {
-      // Real on-chain ICP transfer
+    if (useICP && recipientId777.trim()) {
+      // Real on-chain ICP transfer via +777 ID
       try {
-        await icpToken.transfer(principalId.trim(), BigInt(amount));
+        await icpToken.transferByid777(recipientId777.trim(), BigInt(amount));
         toast.success("✅ Transfer zincire kaydedildi!");
         setSendToId("");
-        setPrincipalId("");
+        setRecipientId777("");
         setSendAmount("");
         setActiveAction("main");
       } catch (e) {
@@ -434,10 +434,10 @@ function WalletTab() {
             </div>
             {useICP ? (
               <input
-                data-ocid="wallet.principal_input"
-                placeholder="Principal ID (aaaaa-aa...)"
-                value={principalId}
-                onChange={(e) => setPrincipalId(e.target.value)}
+                data-ocid="wallet.recipient_id_input"
+                placeholder="+777 XXXX XXXX"
+                value={recipientId777}
+                onChange={(e) => setRecipientId777(e.target.value)}
                 style={{
                   background: "#0a0f1a",
                   border: `1px solid ${NEON_GREEN}33`,
@@ -500,7 +500,7 @@ function WalletTab() {
                     display: "inline-block",
                   }}
                 />
-                Gerçek ICP zincir transferi · Geri alınamaz
+                Gerçek ICP zincir transferi · +777 ID ile gönder · Geri alınamaz
               </div>
             )}
             <div style={{ display: "flex", gap: 6 }}>

@@ -12,15 +12,6 @@ import {
   type Friend,
   type FriendRequest,
   type IDListing,
-  MOCK_CONVERSATIONS,
-  MOCK_FRIENDS,
-  MOCK_FRIEND_REQUESTS,
-  MOCK_ID_LISTINGS,
-  MOCK_LISTINGS,
-  MOCK_P2P_OFFERS,
-  MOCK_PULSES,
-  MOCK_STORIES,
-  MOCK_TRANSACTIONS,
   type MarketListing,
   type P2POffer,
   type PulseEntry,
@@ -347,6 +338,7 @@ interface OmniState {
   callLogs: CallLog[];
   addCallLog: (log: Omit<CallLog, "id">) => void;
   addFriendById: (targetId: AnonymousID) => "added" | "already_friend" | "self";
+  removeFriend: (friendId: AnonymousID) => void;
 
   // Identity Hub
   identities: OmniIdentity[];
@@ -446,7 +438,14 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
         };
         set((s) => ({
           conversations: s.conversations.map((c) =>
-            c.id === convId ? { ...c, messages: [...c.messages, msg] } : c,
+            c.id === convId
+              ? {
+                  ...c,
+                  messages: [...c.messages, msg],
+                  lastMessage: content,
+                  lastTime: Date.now(),
+                }
+              : c,
           ),
         }));
       },
@@ -464,6 +463,8 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
           isChannel: false,
           ghostMode: ghostMode ?? false,
           unread: 0,
+          lastMessage: "",
+          lastTime: Date.now(),
         };
         set((s) => ({ conversations: [newConv, ...s.conversations] }));
         return newConv.id;
@@ -479,6 +480,8 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
           name,
           ghostMode: false,
           unread: 0,
+          lastMessage: "",
+          lastTime: Date.now(),
         };
         set((s) => ({ conversations: [newGroup, ...s.conversations] }));
         return newGroup.id;
@@ -781,7 +784,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       },
 
       // Market
-      listings: MOCK_LISTINGS,
+      listings: [],
       purchaseListing: (listingId) => {
         set((s) => ({
           listings: s.listings.map((l) =>
@@ -857,9 +860,9 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       },
 
       // P2P Economy
-      p2pOffers: MOCK_P2P_OFFERS,
+      p2pOffers: [],
       escrowTrades: [],
-      idListings: MOCK_ID_LISTINGS,
+      idListings: [],
       userTrustScore: 4.2,
       completedTrades: 7,
       referralCount: 2,
@@ -1110,6 +1113,20 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
         return "added";
       },
 
+      removeFriend: (targetId) => {
+        set((s) => ({
+          friends: s.friends.filter((f) => f.friendId !== targetId),
+          conversations: s.conversations.filter(
+            (c) =>
+              !(
+                c.participants.length === 1 &&
+                c.participants.includes(targetId) &&
+                !c.isGroup
+              ),
+          ),
+        }));
+      },
+
       // Identity Hub
       identities: [],
       activeIdentityId: null,
@@ -1333,6 +1350,57 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
     }),
     {
       name: "omni-store",
+      version: 4,
+      migrate: (persistedState: unknown, fromVersion: number) => {
+        const state = persistedState as Record<string, unknown>;
+        if (fromVersion < 4) {
+          const mockConvIds = ["c1", "c2", "c3", "c4"];
+          const mockParticipantIds = [
+            "+777 3421 8921",
+            "+777 9182 4452",
+            "+777 6637 2013",
+            "+777 4490 8174",
+            "+777 2815 6345",
+          ];
+          const mockFriendIds = [
+            "+777 6637 2013",
+            "+777 2815 6345",
+            "+777 7703 9526",
+          ];
+          if (Array.isArray(state.conversations)) {
+            state.conversations = (
+              state.conversations as Array<{
+                id?: string;
+                participants?: string[];
+              }>
+            ).filter(
+              (c) =>
+                !mockConvIds.includes(c.id ?? "") &&
+                !mockParticipantIds.some((id) => c.participants?.includes(id)),
+            );
+          }
+          if (Array.isArray(state.friends)) {
+            state.friends = (
+              state.friends as Array<{ friendId?: string }>
+            ).filter((f) => !mockFriendIds.includes(f.friendId ?? ""));
+          }
+          if (Array.isArray(state.listings)) {
+            state.listings = [];
+          }
+          if (Array.isArray(state.p2pOffers)) {
+            state.p2pOffers = [];
+          }
+          if (Array.isArray(state.idListings)) {
+            state.idListings = [];
+          }
+          if (Array.isArray(state.transactions)) {
+            state.transactions = (
+              state.transactions as Array<{ id?: string; type?: string }>
+            ).filter((t) => t.type === "transfer" || t.type === "earn");
+          }
+        }
+        return state;
+      },
       partialize: (state) => ({
         myId: state.myId,
         displayName: state.displayName,

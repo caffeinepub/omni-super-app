@@ -1,4 +1,5 @@
 import { useICPIdentity } from "@/context/ICPIdentityContext";
+import { useActor } from "@/hooks/useActor";
 import { generateAnonymousID } from "@/lib/mockData";
 import { useOmniStore } from "@/lib/omniStore";
 import {
@@ -50,9 +51,11 @@ export function OnboardingScreen() {
   const handleGenerate = () => setStep("generate");
   const handleLock = () => setStep("name");
   const handleFinish = () => completeOnboarding(generatedId, displayName);
+  const { actor } = useActor();
   const handleICPFinish = () => {
     const id = activeId777 || generateAnonymousID();
     completeOnboarding(id, "");
+    if (actor) (actor as any).registerId777(id).catch(() => {});
   };
 
   const truncatePrincipal = (p: string) =>

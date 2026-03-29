@@ -27,4 +27,9 @@ export interface backendInterface {
     isCallerAdmin(): Promise<boolean>;
     mintInitialTokens(): Promise<bigint>;
     transferTokens(to: Principal, amount: bigint): Promise<bigint>;
+    registerId777(id777: string): Promise<void>;
+    getRegisteredId777(): Promise<string | null>;
+    lookupPrincipalById777(id777: string): Promise<Principal | null>;
+    lookupId777ByPrincipal(p: Principal): Promise<string | null>;
+    transferById777(toId777: string, amount: bigint): Promise<bigint>;
 }

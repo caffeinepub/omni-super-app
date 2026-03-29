@@ -1,6 +1,9 @@
 import { Principal } from "@icp-sdk/core/principal";
 import { useCallback, useEffect, useState } from "react";
-import type { Transaction } from "../backend.d";
+import type {
+  backendInterface as FullBackendInterface,
+  Transaction,
+} from "../backend.d";
 import { useActor } from "./useActor";
 
 export interface UseOmniTokenResult {
@@ -11,6 +14,7 @@ export interface UseOmniTokenResult {
   isTransferring: boolean;
   error: string | null;
   refetch: () => void;
+  transferByid777: (toId777: string, amount: bigint) => Promise<void>;
 }
 
 export function useOmniToken(): UseOmniTokenResult {
@@ -86,6 +90,26 @@ export function useOmniToken(): UseOmniTokenResult {
     [actor],
   );
 
+  const transferByid777 = useCallback(
+    async (toId777: string, amount: bigint) => {
+      if (!actor) throw new Error("Aktör hazır değil");
+      setIsTransferring(true);
+      try {
+        await (actor as unknown as FullBackendInterface).transferById777(
+          toId777,
+          amount,
+        );
+        await Promise.all([
+          actor.getBalance().then(setBalance),
+          actor.getMyTransactions().then(setTransactions),
+        ]);
+      } finally {
+        setIsTransferring(false);
+      }
+    },
+    [actor],
+  );
+
   return {
     balance,
     transactions,
@@ -94,5 +118,6 @@ export function useOmniToken(): UseOmniTokenResult {
     isTransferring,
     error,
     refetch,
+    transferByid777,
   };
 }

@@ -1,3 +1,4 @@
+import { useActor } from "@/hooks/useActor";
 import { useOmniStore } from "@/lib/omniStore";
 import {
   Ghost,
@@ -13,7 +14,8 @@ import {
   Video,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -803,6 +805,17 @@ export function ProfileModule() {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [subSection, setSubSection] = useState<SubSection>(null);
 
+  const { actor } = useActor();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!actor) return;
+    actor
+      .isCallerAdmin()
+      .then(setIsAdmin)
+      .catch(() => {});
+  }, [actor]);
+
   const profileId = myId ?? "+777 3821 4490";
   const name = displayName !== "Anonymous" ? displayName : null;
 
@@ -1115,6 +1128,59 @@ export function ProfileModule() {
       {/* ── Post Viewer Modal ── */}
       {viewerIndex !== null && (
         <PostViewer index={viewerIndex} onClose={() => setViewerIndex(null)} />
+      )}
+
+      {/* ── Admin Panel ── */}
+      {isAdmin && (
+        <div
+          className="mx-4 mb-4 rounded-2xl p-4 space-y-3"
+          style={{ background: "#1A0D07", border: "1px solid #FF6B3544" }}
+          data-ocid="profile.admin.panel"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <span style={{ color: "#FF6B35", fontSize: 16 }}>🔐</span>
+            <span
+              className="text-sm font-black tracking-widest"
+              style={{ color: "#FF6B35" }}
+            >
+              ADMIN PANEL
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "Kullanıcılar", value: "1,247" },
+              { label: "Aktif Oturum", value: "89" },
+              { label: "Bekleyen Rapor", value: "3" },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-xl p-2 text-center"
+                style={{
+                  background: "#FF6B3510",
+                  border: "1px solid #FF6B3522",
+                }}
+              >
+                <p className="text-sm font-black" style={{ color: "#FF6B35" }}>
+                  {stat.value}
+                </p>
+                <p className="text-[10px]" style={{ color: "#8A6A5A" }}>
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              toast.info("Admin moderasyon arayüzü yakında açılacak")
+            }
+            className="w-full py-2.5 rounded-xl text-xs font-bold tracking-widest transition-all"
+            style={{ background: "#FF6B35", color: "#06070B" }}
+            data-ocid="profile.admin.moderation_button"
+          >
+            Moderasyon Merkezi
+          </button>
+        </div>
       )}
 
       {/* ── Sub-section Panel ── */}

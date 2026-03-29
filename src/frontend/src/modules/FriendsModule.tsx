@@ -1200,18 +1200,26 @@ function KisilerTab({
   onOpenAddById: () => void;
   onOpenIDPaylaş: () => void;
 }) {
-  const { friends, setActiveModule, createConversation, privacyMode } =
-    useOmniStore();
+  const {
+    friends,
+    setActiveModule,
+    createConversation,
+    setActiveConversation,
+    privacyMode,
+    removeFriend,
+  } = useOmniStore();
   const [inviteTarget, setInviteTarget] = useState<string | null>(null);
   const [callTarget, setCallTarget] = useState<string | null>(null);
   const [callType, setCallType] = useState<"voice" | "video">("voice");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleMessage = useCallback(
     (friendId: string) => {
-      createConversation(friendId);
+      const convId = createConversation(friendId);
+      setActiveConversation(convId);
       setActiveModule("chat");
     },
-    [createConversation, setActiveModule],
+    [createConversation, setActiveConversation, setActiveModule],
   );
 
   const handleCall = (friendId: string, type: "voice" | "video") => {
@@ -1419,6 +1427,13 @@ function KisilerTab({
                         ocid: `friends.kisiler.invite_button.${i + 1}`,
                         color: "#FFB547",
                       },
+                      {
+                        emoji: "🗑️",
+                        label: "Sil",
+                        action: () => setDeleteTarget(friend.friendId),
+                        ocid: `friends.kisiler.delete_button.${i + 1}`,
+                        color: "#FF4F4F",
+                      },
                     ].map(({ emoji, label, action, ocid, color }) => (
                       <button
                         type="button"
@@ -1452,6 +1467,65 @@ function KisilerTab({
         targetId={callTarget ?? ""}
         initialType={callType}
       />
+
+      {/* Delete Confirmation */}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          data-ocid="friends.delete.dialog"
+        >
+          <div
+            className="mx-4 w-full max-w-sm rounded-2xl p-6"
+            style={{ background: "#0E1320", border: "1px solid #2A3142" }}
+          >
+            <div className="text-center mb-4">
+              <div className="text-3xl mb-2">🗑️</div>
+              <h3 className="font-bold text-base" style={{ color: "#F2F4FF" }}>
+                Arkadaşı Sil
+              </h3>
+              <p className="text-xs mt-1" style={{ color: "#A7ACBE" }}>
+                <span style={{ color: "#19E6FF" }}>{deleteTarget}</span> arkadaş
+                listesinden kaldırılsın mı?
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                data-ocid="friends.delete.cancel_button"
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                style={{
+                  background: "rgba(167,172,190,0.1)",
+                  color: "#A7ACBE",
+                  border: "1px solid #2A3142",
+                }}
+                onClick={() => setDeleteTarget(null)}
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                data-ocid="friends.delete.confirm_button"
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold"
+                style={{
+                  background: "rgba(255,79,79,0.15)",
+                  color: "#FF4F4F",
+                  border: "1px solid rgba(255,79,79,0.3)",
+                }}
+                onClick={() => {
+                  removeFriend(
+                    deleteTarget as import("@/lib/mockData").AnonymousID,
+                  );
+                  toast.success("Arkadaş silindi");
+                  setDeleteTarget(null);
+                }}
+              >
+                Sil
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Invite Modal */}
       <Dialog

@@ -1,25 +1,24 @@
 import Principal "mo:core/Principal";
 import Map "mo:core/Map";
 import Runtime "mo:core/Runtime";
-import Iter "mo:core/Iter";
 import Int "mo:core/Int";
 import Nat "mo:core/Nat";
+import Text "mo:core/Text";
 import Time "mo:core/Time";
-import Nat64 "mo:core/Nat64";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
-import Migration "migration";
 
-(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
   include MixinStorage();
 
-  stable var balances = Map.empty<Principal, Nat>();
-  stable var transactions = Map.empty<Nat, Transaction>();
-  stable var nextTransactionId = 0;
+  var balances = Map.empty<Principal, Nat>();
+  var transactions = Map.empty<Nat, Transaction>();
+  var nextTransactionId = 0;
+  var id777ByPrincipal = Map.empty<Principal, Text>();
+  var principalById777 = Map.empty<Text, Principal>();
   let tokenAmount = 250;
 
   type Transaction = {
@@ -32,14 +31,12 @@ actor {
 
   public shared ({ caller }) func mintInitialTokens() : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can mint tokens");
+      Runtime.trap("Unauthorized");
     };
-
     switch (balances.get(caller)) {
       case (null) {
-        let balance = tokenAmount;
-        balances.add(caller, balance);
-        balance;
+        balances.add(caller, tokenAmount);
+        tokenAmount;
       };
       case (?val) { val };
     };
@@ -47,9 +44,8 @@ actor {
 
   public query ({ caller }) func getBalance() : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can check balance");
+      Runtime.trap("Unauthorized");
     };
-
     switch (balances.get(caller)) {
       case (null) { 0 };
       case (?val) { val };
@@ -58,64 +54,83 @@ actor {
 
   public shared ({ caller }) func transferTokens(to : Principal, amount : Nat) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can transfer tokens");
+      Runtime.trap("Unauthorized");
     };
-
-    if (amount <= 0) {
-      Runtime.trap("Amount must be greater than zero");
-    };
-
-    if (to == caller) {
-      Runtime.trap("Cannot transfer to self");
-    };
-
+    if (amount == 0) { Runtime.trap("Amount must be > 0") };
+    if (to == caller) { Runtime.trap("Cannot transfer to self") };
     switch (balances.get(caller)) {
-      case (null) {
-        Runtime.trap("No balance found for caller");
-      };
+      case (null) { Runtime.trap("No balance") };
       case (?balance) {
-        if (balance < amount) {
-          Runtime.trap("Insufficient balance");
-        };
-
+        if (balance < amount) { Runtime.trap("Insufficient balance") };
+        let newBalance : Nat = Nat.sub(balance, amount);
         let id = getNextTransactionId();
-
-        let transaction : Transaction = {
-          id;
-          from = caller;
-          to;
-          amount;
-          timestamp = Time.now();
-        };
-
-        transactions.add(id, transaction);
-
-        let newBalance = balance - amount;
+        transactions.add(id, { id; from = caller; to; amount; timestamp = Time.now() });
         balances.add(caller, newBalance);
-
-        let receiverBalance = switch (balances.get(to)) {
-          case (null) { amount };
-          case (?balance) { balance + amount };
-        };
-
-        balances.add(to, receiverBalance);
-
+        let recv = switch (balances.get(to)) { case (null) { amount }; case (?b) { b + amount } };
+        balances.add(to, recv);
         newBalance;
+      };
+    };
+  };
+
+  public shared ({ caller }) func registerId777(id777 : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized");
+    };
+    // Remove old mapping if exists
+    switch (id777ByPrincipal.get(caller)) {
+      case (?oldId) { ignore principalById777.remove(oldId) };
+      case (null) {};
+    };
+    id777ByPrincipal.add(caller, id777);
+    principalById777.add(id777, caller);
+  };
+
+  public query ({ caller }) func getRegisteredId777() : async ?Text {
+    id777ByPrincipal.get(caller);
+  };
+
+  public query func lookupPrincipalById777(id777 : Text) : async ?Principal {
+    principalById777.get(id777);
+  };
+
+  public query func lookupId777ByPrincipal(p : Principal) : async ?Text {
+    id777ByPrincipal.get(p);
+  };
+
+  public shared ({ caller }) func transferById777(toId777 : Text, amount : Nat) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized");
+    };
+    switch (principalById777.get(toId777)) {
+      case (null) { Runtime.trap("Recipient +777 ID not found") };
+      case (?toPrincipal) {
+        if (amount == 0) { Runtime.trap("Amount must be > 0") };
+        if (toPrincipal == caller) { Runtime.trap("Cannot transfer to self") };
+        switch (balances.get(caller)) {
+          case (null) { Runtime.trap("No balance") };
+          case (?balance) {
+            if (balance < amount) { Runtime.trap("Insufficient balance") };
+            let newBalance : Nat = Nat.sub(balance, amount);
+            let id = getNextTransactionId();
+            transactions.add(id, { id; from = caller; to = toPrincipal; amount; timestamp = Time.now() });
+            balances.add(caller, newBalance);
+            let recv = switch (balances.get(toPrincipal)) { case (null) { amount }; case (?b) { b + amount } };
+            balances.add(toPrincipal, recv);
+            newBalance;
+          };
+        };
       };
     };
   };
 
   public query ({ caller }) func getMyTransactions() : async [Transaction] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view transactions");
+      Runtime.trap("Unauthorized");
     };
-
-    let myTransactions = transactions.values().filter(
-      func(transaction) {
-        transaction.from == caller or transaction.to == caller;
-      }
-    );
-    myTransactions.toArray();
+    transactions.values().filter(
+      func(t) { t.from == caller or t.to == caller }
+    ).toArray();
   };
 
   func getNextTransactionId() : Nat {

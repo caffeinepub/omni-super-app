@@ -807,7 +807,7 @@ function FeedTab() {
   const [commentOpen, setCommentOpen] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const { tokenBalance } = useOmniStore();
+  const { tokenBalance, setActiveModule } = useOmniStore();
   const [localBalance, setLocalBalance] = useState(tokenBalance);
 
   const toggleLike = (id: string) => {
@@ -1029,6 +1029,20 @@ function FeedTab() {
                 >
                   <Share2 size={14} />
                   Paylaş
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveModule("chat")}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:border-cyan-400"
+                  style={{
+                    background: "#1E2436",
+                    color: "#19E6FF",
+                    border: "1px solid #19E6FF33",
+                  }}
+                  data-ocid="feed.post.dm_button"
+                >
+                  <MessageCircle size={14} />
+                  DM
                 </button>
                 <button
                   type="button"

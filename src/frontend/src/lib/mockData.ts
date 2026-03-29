@@ -24,6 +24,11 @@ export interface Message {
   reactions?: Record<string, string[]>;
   replyToId?: string;
   translatedContent?: string;
+  type?: "text" | "image" | "file" | "location" | "voice";
+  fileName?: string;
+  fileSize?: number;
+  lat?: number;
+  lng?: number;
 }
 
 export interface Conversation {
