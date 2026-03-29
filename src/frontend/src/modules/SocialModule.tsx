@@ -18,6 +18,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useStorageUpload } from "../hooks/useStorageUpload";
 import { useOmniStore } from "../lib/omniStore";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -506,7 +507,10 @@ function MediaUploadModal({
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { upload, isUploading } = useStorageUpload();
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/") && !file.type.startsWith("video/"))
@@ -532,14 +536,32 @@ function MediaUploadModal({
     setMediaType(null);
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!text.trim() && !mediaFile) return;
     const post: Partial<Post> = { content: text, mood, privacy };
-    if (mediaPreview && mediaType) {
+    setIsSubmitting(true);
+
+    if (mediaFile && mediaType) {
+      try {
+        setUploadProgress(0);
+        const icpUrl = await upload(mediaFile, setUploadProgress);
+        post.mediaUrl = icpUrl;
+        post.mediaType = mediaType;
+      } catch (_e) {
+        toast.error("Medya yüklenemedi — metin olarak paylaşılıyor");
+        // Still use local preview as fallback
+        if (mediaPreview) {
+          post.mediaUrl = mediaPreview;
+          post.mediaType = mediaType;
+        }
+      }
+    } else if (mediaPreview && mediaType) {
       post.mediaUrl = mediaPreview;
       post.mediaType = mediaType;
     }
+
     onCreate(post);
+    setIsSubmitting(false);
     onClose();
   };
 
@@ -751,14 +773,23 @@ function MediaUploadModal({
           <button
             type="button"
             onClick={submit}
+            disabled={isSubmitting || isUploading}
             className="flex-1 py-3 rounded-xl font-bold text-sm"
             style={{
-              background: "linear-gradient(135deg, #19E6FF, #2FF5C7)",
-              color: "#06070B",
+              background:
+                isSubmitting || isUploading
+                  ? "#333"
+                  : "linear-gradient(135deg, #19E6FF, #2FF5C7)",
+              color: isSubmitting || isUploading ? "#888" : "#06070B",
+              cursor: isSubmitting || isUploading ? "not-allowed" : "pointer",
             }}
             data-ocid="post.submit_button"
           >
-            Paylaş
+            {isUploading
+              ? `Yükleniyor... ${uploadProgress}%`
+              : isSubmitting
+                ? "Paylaşılıyor..."
+                : "Paylaş"}
           </button>
         </div>
       </motion.div>

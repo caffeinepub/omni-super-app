@@ -24,6 +24,13 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const Transaction = IDL.Record({
+  'id' : IDL.Nat,
+  'to' : IDL.Principal,
+  'from' : IDL.Principal,
+  'timestamp' : IDL.Int,
+  'amount' : IDL.Nat,
+});
 
 export const idlService = IDL.Service({
   '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -54,8 +61,12 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'getBalance' : IDL.Func([], [IDL.Nat], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getMyTransactions' : IDL.Func([], [IDL.Vec(Transaction)], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'mintInitialTokens' : IDL.Func([], [IDL.Nat], []),
+  'transferTokens' : IDL.Func([IDL.Principal, IDL.Nat], [IDL.Nat], []),
 });
 
 export const idlInitArgs = [];
@@ -76,6 +87,13 @@ export const idlFactory = ({ IDL }) => {
     'admin' : IDL.Null,
     'user' : IDL.Null,
     'guest' : IDL.Null,
+  });
+  const Transaction = IDL.Record({
+    'id' : IDL.Nat,
+    'to' : IDL.Principal,
+    'from' : IDL.Principal,
+    'timestamp' : IDL.Int,
+    'amount' : IDL.Nat,
   });
   
   return IDL.Service({
@@ -107,8 +125,12 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'getBalance' : IDL.Func([], [IDL.Nat], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getMyTransactions' : IDL.Func([], [IDL.Vec(Transaction)], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'mintInitialTokens' : IDL.Func([], [IDL.Nat], []),
+    'transferTokens' : IDL.Func([IDL.Principal, IDL.Nat], [IDL.Nat], []),
   });
 };
 

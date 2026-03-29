@@ -89,6 +89,13 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface Transaction {
+    id: bigint;
+    to: Principal;
+    from: Principal;
+    timestamp: bigint;
+    amount: bigint;
+}
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
     blob_hash: string;
@@ -114,8 +121,12 @@ export interface backendInterface {
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    getBalance(): Promise<bigint>;
     getCallerUserRole(): Promise<UserRole>;
+    getMyTransactions(): Promise<Array<Transaction>>;
     isCallerAdmin(): Promise<boolean>;
+    mintInitialTokens(): Promise<bigint>;
+    transferTokens(to: Principal, amount: bigint): Promise<bigint>;
 }
 import type { UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
@@ -232,6 +243,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getBalance(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getBalance();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getBalance();
+            return result;
+        }
+    }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
@@ -246,6 +271,20 @@ export class Backend implements backendInterface {
             return from_candid_UserRole_n10(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getMyTransactions(): Promise<Array<Transaction>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMyTransactions();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMyTransactions();
+            return result;
+        }
+    }
     async isCallerAdmin(): Promise<boolean> {
         if (this.processError) {
             try {
@@ -257,6 +296,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.isCallerAdmin();
+            return result;
+        }
+    }
+    async mintInitialTokens(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.mintInitialTokens();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.mintInitialTokens();
+            return result;
+        }
+    }
+    async transferTokens(arg0: Principal, arg1: bigint): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.transferTokens(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.transferTokens(arg0, arg1);
             return result;
         }
     }

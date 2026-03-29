@@ -1,3 +1,4 @@
+import { useOmniToken } from "@/hooks/useOmniToken";
 import type {
   EscrowTrade,
   IDListing,
@@ -175,23 +176,44 @@ function WalletTab() {
     upgradeToPremium,
   } = useOmniStore();
 
+  const icpToken = useOmniToken();
+
   const [activeAction, setActiveAction] = useState<"main" | "send" | "receive">(
     "main",
   );
   const [sendToId, setSendToId] = useState("");
   const [sendAmount, setSendAmount] = useState("");
+  const [principalId, setPrincipalId] = useState("");
+  const [useICP, setUseICP] = useState(false);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const amount = Number.parseInt(sendAmount);
-    if (!sendToId.trim() || !amount || amount <= 0) return;
-    const success = sendTokens(sendToId.trim(), amount);
-    if (success) {
-      toast.success(`${amount} OMNI gönderildi!`);
-      setSendToId("");
-      setSendAmount("");
-      setActiveAction("main");
+    if (!amount || amount <= 0) return;
+
+    if (useICP && principalId.trim()) {
+      // Real on-chain ICP transfer
+      try {
+        await icpToken.transfer(principalId.trim(), BigInt(amount));
+        toast.success("✅ Transfer zincire kaydedildi!");
+        setSendToId("");
+        setPrincipalId("");
+        setSendAmount("");
+        setActiveAction("main");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Transfer başarısız");
+      }
     } else {
-      toast.error("Yetersiz bakiye");
+      // Fallback: localStorage-based transfer
+      if (!sendToId.trim()) return;
+      const success = sendTokens(sendToId.trim(), amount);
+      if (success) {
+        toast.success(`${amount} OMNI gönderildi!`);
+        setSendToId("");
+        setSendAmount("");
+        setActiveAction("main");
+      } else {
+        toast.error("Yetersiz bakiye");
+      }
     }
   };
 
@@ -260,6 +282,39 @@ function WalletTab() {
             </div>
             <div style={{ color: "#555", fontSize: 11, marginTop: 4 }}>
               ≈ €{(tokenBalance * 0.085).toFixed(2)}
+            </div>
+            {/* ICP On-Chain Balance */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                marginTop: 8,
+              }}
+            >
+              <div
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: icpToken.isLoading ? "#555" : "#2FF5C7",
+                  boxShadow: icpToken.isLoading ? "none" : "0 0 6px #2FF5C7",
+                }}
+              />
+              <span style={{ color: "#888", fontSize: 10, letterSpacing: 1 }}>
+                ZİNCİR BAKİYESİ
+              </span>
+              {icpToken.isLoading ? (
+                <span style={{ color: "#555", fontSize: 10 }}>
+                  yükleniyor...
+                </span>
+              ) : (
+                <span
+                  style={{ color: "#2FF5C7", fontSize: 12, fontWeight: 700 }}
+                >
+                  {icpToken.balance.toString()} OMNI
+                </span>
+              )}
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -340,21 +395,76 @@ function WalletTab() {
               gap: 8,
             }}
           >
-            <input
-              data-ocid="wallet.send_input"
-              placeholder="+777 XXXX XXXX"
-              value={sendToId}
-              onChange={(e) => setSendToId(e.target.value)}
-              style={{
-                background: "#0a0f1a",
-                border: `1px solid ${NEON_CYAN}33`,
-                borderRadius: 8,
-                padding: "8px 12px",
-                color: "#fff",
-                fontSize: 13,
-                outline: "none",
-              }}
-            />
+            {/* Toggle ICP / Local transfer */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
+              <button
+                type="button"
+                onClick={() => setUseICP(false)}
+                style={{
+                  flex: 1,
+                  padding: "6px 0",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  background: !useICP ? `${NEON_CYAN}20` : "#0a0f1a",
+                  border: `1px solid ${!useICP ? NEON_CYAN : "#222"}`,
+                  color: !useICP ? NEON_CYAN : "#555",
+                }}
+              >
+                +777 ID
+              </button>
+              <button
+                type="button"
+                onClick={() => setUseICP(true)}
+                style={{
+                  flex: 1,
+                  padding: "6px 0",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  background: useICP ? `${NEON_GREEN}20` : "#0a0f1a",
+                  border: `1px solid ${useICP ? NEON_GREEN : "#222"}`,
+                  color: useICP ? NEON_GREEN : "#555",
+                }}
+              >
+                🔗 ICP Zincir
+              </button>
+            </div>
+            {useICP ? (
+              <input
+                data-ocid="wallet.principal_input"
+                placeholder="Principal ID (aaaaa-aa...)"
+                value={principalId}
+                onChange={(e) => setPrincipalId(e.target.value)}
+                style={{
+                  background: "#0a0f1a",
+                  border: `1px solid ${NEON_GREEN}33`,
+                  borderRadius: 8,
+                  padding: "8px 12px",
+                  color: "#fff",
+                  fontSize: 13,
+                  outline: "none",
+                }}
+              />
+            ) : (
+              <input
+                data-ocid="wallet.send_input"
+                placeholder="+777 XXXX XXXX"
+                value={sendToId}
+                onChange={(e) => setSendToId(e.target.value)}
+                style={{
+                  background: "#0a0f1a",
+                  border: `1px solid ${NEON_CYAN}33`,
+                  borderRadius: 8,
+                  padding: "8px 12px",
+                  color: "#fff",
+                  fontSize: 13,
+                  outline: "none",
+                }}
+              />
+            )}
             <input
               data-ocid="wallet.amount_input"
               placeholder="Miktar (OMNI)"
@@ -371,24 +481,48 @@ function WalletTab() {
                 outline: "none",
               }}
             />
+            {useICP && (
+              <div
+                style={{
+                  color: "#2FF5C7",
+                  fontSize: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <span
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: "#2FF5C7",
+                    display: "inline-block",
+                  }}
+                />
+                Gerçek ICP zincir transferi · Geri alınamaz
+              </div>
+            )}
             <div style={{ display: "flex", gap: 6 }}>
               <button
                 type="button"
                 data-ocid="wallet.send_submit_button"
+                disabled={icpToken.isTransferring}
                 onClick={handleSend}
                 style={{
                   flex: 1,
-                  background: NEON_CYAN,
+                  background: icpToken.isTransferring ? "#333" : NEON_CYAN,
                   border: "none",
                   borderRadius: 8,
                   padding: "8px 0",
                   color: BG_DARK,
                   fontSize: 13,
                   fontWeight: 700,
-                  cursor: "pointer",
+                  cursor: icpToken.isTransferring ? "not-allowed" : "pointer",
+                  opacity: icpToken.isTransferring ? 0.7 : 1,
                 }}
               >
-                GÖNDER
+                {icpToken.isTransferring ? "GÖNDERİLİYOR..." : "GÖNDER"}
               </button>
               <button
                 type="button"
@@ -552,6 +686,110 @@ function WalletTab() {
           ))}
         </div>
       </div>
+
+      {/* ICP On-Chain Transactions */}
+      {icpToken.transactions.length > 0 && (
+        <div
+          style={{
+            background: BG_CARD,
+            border: `1px solid ${NEON_GREEN}33`,
+            borderRadius: 12,
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              color: "#888",
+              fontSize: 11,
+              letterSpacing: 1,
+              marginBottom: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: NEON_GREEN,
+                display: "inline-block",
+                boxShadow: `0 0 6px ${NEON_GREEN}`,
+              }}
+            />
+            ZİNCİR İŞLEMLERİ
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {icpToken.transactions.slice(0, 5).map((tx, idx) => {
+              const tsMs = Number(tx.timestamp / BigInt(1_000_000));
+              const diff = Date.now() - tsMs;
+              const relTime =
+                diff < 3600000
+                  ? `${Math.floor(diff / 60000)}d`
+                  : diff < 86400000
+                    ? `${Math.floor(diff / 3600000)}s`
+                    : `${Math.floor(diff / 86400000)}g`;
+              const isSend = tx.from.toString() !== "2vxsx-fae";
+              return (
+                <div
+                  key={String(tx.id)}
+                  data-ocid={`wallet.item.${idx + 1}`}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "8px 0",
+                    borderBottom: "1px solid #0f1520",
+                  }}
+                >
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 10 }}
+                  >
+                    <div
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        background: `${isSend ? NEON_RED : NEON_GREEN}15`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: isSend ? NEON_RED : NEON_GREEN,
+                        fontSize: 14,
+                      }}
+                    >
+                      {isSend ? (
+                        <ArrowUpRight size={14} />
+                      ) : (
+                        <ArrowDownLeft size={14} />
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ color: "#ccc", fontSize: 12 }}>
+                        {isSend ? "Gönderildi" : "Alındı"} · Zincir
+                      </div>
+                      <div style={{ color: "#444", fontSize: 10 }}>
+                        {relTime} önce
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      color: isSend ? NEON_RED : NEON_GREEN,
+                      fontSize: 13,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {isSend ? "-" : "+"}
+                    {tx.amount.toString()} OMNI
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Transactions */}
       <div
