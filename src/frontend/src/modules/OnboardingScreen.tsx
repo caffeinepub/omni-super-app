@@ -12,6 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export function OnboardingScreen() {
   const { completeOnboarding } = useOmniStore();
@@ -55,7 +56,17 @@ export function OnboardingScreen() {
   const handleICPFinish = () => {
     const id = activeId777 || generateAnonymousID();
     completeOnboarding(id, "");
-    if (actor) (actor as any).registerId777(id).catch(() => {});
+    if (actor) {
+      (actor as any).registerId777(id).catch(() => {});
+    } else {
+      // Inform user that ICP features won't work without full login
+      setTimeout(() => {
+        toast.info(
+          "Anonim mod: Token transfer ve medya yükleme için ICP ile giriş gerekli.",
+          { duration: 5000 },
+        );
+      }, 1500);
+    }
   };
 
   const truncatePrincipal = (p: string) =>

@@ -1,3 +1,4 @@
+import { useActor } from "@/hooks/useActor";
 import { useOmniToken } from "@/hooks/useOmniToken";
 import type {
   EscrowTrade,
@@ -159,6 +160,7 @@ function WalletTab() {
   } = useOmniStore();
 
   const icpToken = useOmniToken();
+  const { actor } = useActor();
 
   const [activeAction, setActiveAction] = useState<"main" | "send" | "receive">(
     "main",
@@ -181,7 +183,12 @@ function WalletTab() {
         setSendAmount("");
         setActiveAction("main");
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Transfer başarısız");
+        const errMsg = e instanceof Error ? e.message : "Transfer başarısız";
+        const userMsg =
+          errMsg.includes("Aktör hazır değil") || errMsg.includes("actor")
+            ? "ICP ile giriş yapman gerekiyor. Profil > Kimlik Doğrula adımını tamamla."
+            : errMsg;
+        toast.error(userMsg);
       }
     } else {
       // Fallback: localStorage-based transfer
@@ -375,6 +382,23 @@ function WalletTab() {
               gap: 8,
             }}
           >
+            {/* ICP not authenticated warning */}
+            {useICP && !actor && (
+              <div
+                style={{
+                  background: "rgba(255,160,50,0.1)",
+                  border: "1px solid rgba(255,160,50,0.3)",
+                  borderRadius: 10,
+                  padding: "10px 14px",
+                  fontSize: 12,
+                  color: "#FFA032",
+                  marginBottom: 4,
+                }}
+              >
+                ⚠️ ICP transferi için önce ICP ile giriş yapman gerekiyor. Profil
+                → Kimlik Doğrula adımını tamamla.
+              </div>
+            )}
             {/* Toggle ICP / Local transfer */}
             <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
               <button

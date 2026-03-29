@@ -334,7 +334,16 @@ function MediaUploadModal({
         post.mediaUrl = icpUrl;
         post.mediaType = mediaType;
       } catch (_e) {
-        toast.error("Medya yüklenemedi — metin olarak paylaşılıyor");
+        const errStr = _e instanceof Error ? _e.message : String(_e);
+        const isIdentityErr =
+          errStr.toLowerCase().includes("identity") ||
+          errStr.toLowerCase().includes("auth") ||
+          errStr.toLowerCase().includes("aktör");
+        toast.error(
+          isIdentityErr
+            ? "Medya yüklemek için ICP ile giriş yapman gerekiyor. Çıkış yap ve tekrar giriş yap."
+            : "Medya yüklenemedi — metin olarak paylaşılıyor",
+        );
         // Still use local preview as fallback
         if (mediaPreview) {
           post.mediaUrl = mediaPreview;

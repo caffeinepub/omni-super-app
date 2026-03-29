@@ -457,7 +457,9 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
         if (existing) return existing.id;
         const newConv: Conversation = {
           id: `c${Date.now()}`,
-          participants: [participantId, ...(get().myId ? [get().myId!] : [])],
+          participants: [
+            ...new Set([participantId, ...(get().myId ? [get().myId!] : [])]),
+          ],
           messages: [],
           isGroup: false,
           isChannel: false,
@@ -1118,12 +1120,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
         set((s) => ({
           friends: s.friends.filter((f) => f.friendId !== targetId),
           conversations: s.conversations.filter(
-            (c) =>
-              !(
-                c.participants.length === 1 &&
-                c.participants.includes(targetId) &&
-                !c.isGroup
-              ),
+            (c) => !(c.participants.includes(targetId) && !c.isGroup),
           ),
         }));
       },
@@ -1269,7 +1266,10 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
       setDatingActiveMatch: (id) => set({ datingActiveMatchId: id }),
 
       refreshDatingProfiles: () => {
-        set({ datingProfiles: generateFreshDatingProfiles() });
+        set({
+          datingProfiles: generateFreshDatingProfiles(),
+          datingDailySwipes: 0,
+        });
         get().earnTokens(5, "Yeni profiller yüklendi: +5 OMNI");
       },
 

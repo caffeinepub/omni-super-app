@@ -1084,10 +1084,11 @@ export function ChatModule() {
                             );
                             if (existing) {
                               setActiveConversation(existing.id);
+                              setActiveTab("dms");
                             } else {
                               const id = createConversation(friend.friendId);
-                              // Use setTimeout to allow store update to propagate
-                              setTimeout(() => setActiveConversation(id), 0);
+                              setActiveConversation(id);
+                              setActiveTab("dms");
                             }
                           }}
                         >
