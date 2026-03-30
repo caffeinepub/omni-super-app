@@ -6,7 +6,6 @@ import { useOmniStore } from "@/lib/omniStore";
 import { AIModule } from "@/modules/AIModule";
 import { ChatModule } from "@/modules/ChatModule";
 import { DatingModule } from "@/modules/DatingModule";
-import { FriendsModule } from "@/modules/FriendsModule";
 import { MarketModule } from "@/modules/MarketModule";
 import { OnboardingScreen } from "@/modules/OnboardingScreen";
 import { ProfileModule } from "@/modules/ProfileModule";
@@ -17,7 +16,6 @@ import { WalletModule } from "@/modules/WalletModule";
 const MODULE_TITLES: Record<string, string> = {
   chat: "MESSAGES",
   social: "SOCIAL",
-  friends: "FRIENDS",
   ride: "RIDE",
   market: "MARKETPLACE",
   ai: "OMNI AI",
@@ -79,7 +77,6 @@ export default function App() {
           >
             {activeModule === "chat" && <ChatModule />}
             {activeModule === "social" && <SocialModule />}
-            {activeModule === "friends" && <FriendsModule />}
             {activeModule === "ride" && <RideModule />}
             {activeModule === "market" && <MarketModule />}
             {activeModule === "ai" && <AIModule />}

@@ -1,3 +1,4 @@
+import { useOmniStore } from "@/lib/omniStore";
 import L from "leaflet";
 import {
   AlertTriangle,
@@ -145,15 +146,6 @@ const PEAK_HOURS_HEIGHTS: { hour: number; height: number }[] = Array.from(
   },
 );
 
-const MOCK_RIDE_HISTORY: Array<{
-  id: string;
-  dest: string;
-  fare: number;
-  km: number;
-  rating: number;
-  time: string;
-}> = [];
-
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 function haversineKm(a: LatLon, b: LatLon): number {
@@ -275,6 +267,7 @@ function useDebounce<T>(value: T, delay: number): T {
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export default function RideModule() {
+  const { rideHistory } = useOmniStore();
   // ── Passenger state ──
   const [rideState, setRideState] = useState<RideState>("idle");
   const [isDriverMode, setIsDriverMode] = useState(false);
@@ -1516,7 +1509,7 @@ export default function RideModule() {
                 Son Sürüşler
               </p>
               <div className="space-y-1.5">
-                {MOCK_RIDE_HISTORY.length === 0 ? (
+                {rideHistory.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-8 gap-2">
                     <span className="text-3xl">🚗</span>
                     <p
@@ -1530,30 +1523,36 @@ export default function RideModule() {
                     </p>
                   </div>
                 ) : (
-                  MOCK_RIDE_HISTORY.map((ride, idx) => (
+                  rideHistory.map((ride, idx) => (
                     <div
-                      key={`${ride.id}-${ride.time}`}
+                      key={ride.id}
                       className="flex items-center gap-2 bg-[#1a1a1a] border border-white/5 rounded-xl px-3 py-2"
                       data-ocid={`ride.item.${idx + 1}`}
                     >
                       <Car size={12} className="text-[#00D4FF] flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-white truncate">{ride.id}</p>
-                        <p className="text-[10px] text-white/40">{ride.dest}</p>
+                        <p className="text-xs text-white truncate">
+                          {ride.destination}
+                        </p>
+                        <p className="text-[10px] text-white/40">
+                          {ride.origin}
+                        </p>
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="text-xs font-bold text-white">
                           {currency.symbol}
-                          {ride.fare}
+                          {ride.price.toFixed(1)}
                         </p>
-                        <p className="text-[10px] text-white/40">{ride.km}km</p>
+                        <p className="text-[10px] text-white/40">
+                          {ride.distanceKm.toFixed(1)}km
+                        </p>
                       </div>
                       <div className="flex items-center gap-0.5 text-yellow-400 text-[10px] flex-shrink-0">
                         <Star size={8} fill="currentColor" />
-                        {ride.rating}
+                        {ride.passengerRating}
                       </div>
                       <span className="text-[10px] text-white/30 flex-shrink-0">
-                        {ride.time}
+                        {new Date(ride.completedAt).toLocaleDateString("tr")}
                       </span>
                     </div>
                   ))

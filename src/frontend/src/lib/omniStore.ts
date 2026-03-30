@@ -178,7 +178,6 @@ export type Module =
   | "market"
   | "ai"
   | "wallet"
-  | "friends"
   | "ride"
   | "dating"
   | "profile";
