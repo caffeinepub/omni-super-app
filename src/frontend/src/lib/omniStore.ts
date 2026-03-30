@@ -450,6 +450,9 @@ interface OmniState {
 interface RuntimeState {
   typingConversations: string[];
   setTyping: (convId: string, isTyping: boolean) => void;
+  chatPendingNavigate: string | null;
+  clearChatNavigate: () => void;
+  openConversationWith: (friendId: string) => void;
 }
 
 const _RANDOM_IDS: AnonymousID[] = [
@@ -532,7 +535,7 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
           participants: [
             ...new Set([
               participantId,
-              get().myId ?? localStorage.getItem("omni-permanent-id") ?? "me",
+              get().myId ?? localStorage.getItem("omni-permanent-id") ?? "anon",
             ]),
           ],
           messages: [],
@@ -1373,10 +1376,27 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
             : s.typingConversations.filter((id) => id !== convId),
         }));
       },
+
+      chatPendingNavigate: null as string | null,
+      clearChatNavigate: () => set({ chatPendingNavigate: null }),
+      openConversationWith: (friendId: string) => {
+        const state = get();
+        const existing = state.conversations.find(
+          (c) =>
+            !c.isGroup && !c.isChannel && c.participants.includes(friendId),
+        );
+        let convId: string;
+        if (existing) {
+          convId = existing.id;
+        } else {
+          convId = state.createConversation(friendId);
+        }
+        set({ activeConversationId: convId, chatPendingNavigate: convId });
+      },
     }),
     {
       name: "omni-store",
-      version: 7,
+      version: 8,
       migrate: (persistedState: unknown, fromVersion: number) => {
         const state = persistedState as Record<string, unknown>;
         if (fromVersion < 4) {
@@ -1446,6 +1466,22 @@ export const useOmniStore = create<OmniState & RuntimeState>()(
               (c: { participants?: string[] }) =>
                 !c.participants?.includes("me"),
             );
+          }
+        }
+        if (fromVersion < 8) {
+          if (Array.isArray(state.conversations)) {
+            state.conversations = (
+              state.conversations as Array<{ participants?: string[] }>
+            ).filter(
+              (c: { participants?: string[] }) =>
+                !c.participants?.includes("me"),
+            );
+          }
+          const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+          if (Array.isArray(state.datingMatches)) {
+            state.datingMatches = (
+              state.datingMatches as Array<{ timestamp?: number }>
+            ).filter((m) => (m.timestamp ?? 0) > sevenDaysAgo);
           }
         }
         // Always restore permanent ID if it exists

@@ -287,6 +287,9 @@ export function ChatModule() {
     friends,
     addFriendById,
     removeFriend,
+    chatPendingNavigate,
+    clearChatNavigate,
+    openConversationWith,
   } = useOmniStore();
 
   const [input, setInput] = useState("");
@@ -367,6 +370,13 @@ export function ChatModule() {
   const isTyping = activeConversationId
     ? typingConversations.includes(activeConversationId)
     : false;
+
+  useEffect(() => {
+    if (chatPendingNavigate) {
+      setActiveTab("dms");
+      clearChatNavigate();
+    }
+  }, [chatPendingNavigate, clearChatNavigate]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
   useEffect(() => {
@@ -974,19 +984,7 @@ export function ChatModule() {
                           }}
                           data-ocid={`chat.friends.button.${idx + 1}`}
                           title="Mesaj"
-                          onClick={() => {
-                            const existing = conversations.find(
-                              (c) =>
-                                !c.isGroup &&
-                                !c.isChannel &&
-                                c.participants.includes(friend.friendId),
-                            );
-                            const convId = existing
-                              ? existing.id
-                              : createConversation(friend.friendId);
-                            setActiveConversation(convId);
-                            setActiveTab("dms");
-                          }}
+                          onClick={() => openConversationWith(friend.friendId)}
                         >
                           <Send size={14} />
                         </button>

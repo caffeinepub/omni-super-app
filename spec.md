@@ -1,32 +1,48 @@
-# OMNI Super App
+# OMNI Super App — Temel Refactor
 
 ## Current State
-Full-stack super app with Chat, Social, Dating, Market, Wallet, AI, Profile, Ride modules. Multiple rounds of bug fixing done but several critical issues remain across all modules.
+
+OMNI, 8 modüllü (Chat, Social, Dating, Market, Wallet, AI, Profile, Ride) bir super app. Ana sorun: aynı hatalar her build'de tekrar ediyor çünkü köklü mimari sorunlar var:
+
+1. **Chat tab geçişi**: `activeTab` local state, `activeConversationId` Zustand store — aralarında güvenilir sinyal yok.
+2. **Store tek dosya (1501 satır)**: tüm modüllerin state'i karışık, migration karmaşık.
+3. **WebRTC**: ICP actor null ise sessiz failure.
+4. **Wallet**: ICP girişsiz kullanıcı için UX belirsiz.
+5. **+777 ID race condition**: bazı render'larda modüller null ID görüyor.
 
 ## Requested Changes (Diff)
 
 ### Add
-- `likeReel` action in omniStore for Reels tab likes
+- `openConversationWith(friendId)` action: store'da atomic olarak conversation oluştur + `chatPendingNavigate` flag set et — ChatModule bunu useEffect ile okuyarak tab'ı güvenilir biçimde değiştirir.
+- `chatPendingNavigate: string | null` + `clearChatNavigate()` store action.
+- Store version 8 migration: eski "me" participant'lı conversationları temizle.
+- ICP actor null için Türkçe toast.error + "ICP ile giriş yap" yönlendirmesi (ChatModule WebRTC).
+- Wallet'ta ICP girişsiz uyarı banner (zaten var, daha belirgin yapılacak).
 
 ### Modify
-- **omniStore**: `tokenBalance` initial value → 0 (not 250); `completedTrades` → 0; `referralCount` → 0; `dailyStreakDays` → 0; `userTrustScore` → 0; `rideRole`/`driverOnline` not persisted; `createConversation` race condition fix; Market `sellerId` fallback fix to `+777 0000 0000`
-- **ProfileModule**: `trustDisplay` fix — use `(userTrustScore).toFixed(1)` not divide by 20; SubSection "Arkadaşlar" use real `friends` store; SubSection "Eşleşmeler" use real `datingMatches` store; Admin panel note it's demo data
-- **SocialModule**: `handleCreate` must copy `mediaUrl` and `mediaType` to new post; `toggleLike` for reels call `likeReel` store action; `handleTip` deduct from `tokenBalance` via store `sendTokens`; ProfileTab use real store data (myId777, socialPosts, tokenBalance, bio)
-- **ChatModule**: message button must call `setActiveTab("dms")` AND `setActiveConversation(id)` together; smart replies in Turkish; conversation title use otherParticipant name not own ID
-- **WalletModule**: `formatCountdown` "d" → "dk"; ICP relTime use `dk/sa/g` consistently
-- **DatingModule**: `timeAgo` "d" → "dk"
-- **MarketModule**: `sellerId` fallback `+777 0000 0000`; `trustScore` use `userTrustScore` from store
+- **omniStore.ts**: `STORE_VERSION` → 8; `createConversation` içinde `myId` fallback'i `localStorage.getItem("omni-permanent-id")` ile sağlamlaştır; `openConversationWith` ekle.
+- **ChatModule.tsx**: Friends tab'daki mesaj butonundan `openConversationWith(friend.friendId)` çağır (setActiveConversation + setActiveTab kombinasyonu yerine). `useEffect` ile `chatPendingNavigate` izle → tab'ı "dms"e çevir + `clearChatNavigate()` çağır.
+- **ChatModule.tsx WebRTC**: `if (!actor || !myId777)` → Türkçe hata mesajı göster, return.
+- **Store init**: `myId` initial value `localStorage.getItem("omni-permanent-id")` zaten set, ama tüm aksiyonlarda null fallback da `localStorage`'dan geliyor — tutarlı hale getir.
 
 ### Remove
-- Hardcoded fake friends list in ProfileModule SubSection
-- Hardcoded fake matches in ProfileModule SubSection  
-- Hardcoded stats (trust=94, followers=1247, posts=42) in SocialModule ProfileTab
-- Hardcoded bio in SocialModule ProfileTab
+- ChatModule'dan `setActiveTab("dms")` + `setActiveConversation` kombinasyon çağrıları → `openConversationWith` ile değiştir.
+- Kalan hardcoded/mock veri kontrolü: hiçbir modülde sabit veri kalmamalı.
 
 ## Implementation Plan
-1. Fix omniStore: initial values, likeReel action, createConversation race, partialize (remove rideRole/driverOnline)
-2. Fix ProfileModule: trustDisplay formula, real friends/matches data, admin panel label
-3. Fix SocialModule: mediaUrl passthrough, reel likes, token tip, ProfileTab real data
-4. Fix ChatModule: tab+conversation switching, Turkish smart replies, title logic
-5. Fix WalletModule + DatingModule: time format strings
-6. Fix MarketModule: sellerId format, trustScore from store
+
+1. **omniStore.ts**:
+   - `STORE_VERSION` → 8
+   - `chatPendingNavigate: null` field ekle (runtime, persist edilmez)
+   - `clearChatNavigate()` action
+   - `openConversationWith(friendId)`: existing conv bul veya `createConversation` çağır, `setActiveConversation(id)` + `chatPendingNavigate: id` set et
+   - `createConversation` içinde myId fallback sağlamlaştır
+   - Migration v8: `conversations`'daki "me" participant'lı kayıtları temizle
+
+2. **ChatModule.tsx**:
+   - `chatPendingNavigate`, `clearChatNavigate` store'dan al
+   - `useEffect([chatPendingNavigate])`: değer gelince `setActiveTab("dms")` + `clearChatNavigate()`
+   - Friends listesindeki mesaj butonu onClick → sadece `openConversationWith(friend.friendId)`
+   - WebRTC `initiateCall`: actor null ise `toast.error("Sesli/görüntülü arama için ICP ile giriş yapman gerekiyor")`
+
+3. **Validate**: lint + typecheck + build
