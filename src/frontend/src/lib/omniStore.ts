@@ -180,8 +180,6 @@ export type Module =
   | "wallet"
   | "friends"
   | "ride"
-  | "identity"
-  | "engine"
   | "dating"
   | "profile";
 

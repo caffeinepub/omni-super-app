@@ -6,9 +6,7 @@ import { useOmniStore } from "@/lib/omniStore";
 import { AIModule } from "@/modules/AIModule";
 import { ChatModule } from "@/modules/ChatModule";
 import { DatingModule } from "@/modules/DatingModule";
-import { EngineModule } from "@/modules/EngineModule";
 import { FriendsModule } from "@/modules/FriendsModule";
-import { IdentityModule } from "@/modules/IdentityModule";
 import { MarketModule } from "@/modules/MarketModule";
 import { OnboardingScreen } from "@/modules/OnboardingScreen";
 import { ProfileModule } from "@/modules/ProfileModule";
@@ -24,8 +22,6 @@ const MODULE_TITLES: Record<string, string> = {
   market: "MARKETPLACE",
   ai: "OMNI AI",
   wallet: "WALLET",
-  engine: "RT ENGINE",
-  identity: "IDENTITY HUB",
   dating: "DATING",
   profile: "PROFİL",
 };
@@ -88,8 +84,6 @@ export default function App() {
             {activeModule === "market" && <MarketModule />}
             {activeModule === "ai" && <AIModule />}
             {activeModule === "wallet" && <WalletModule />}
-            {activeModule === "engine" && <EngineModule />}
-            {activeModule === "identity" && <IdentityModule />}
             {activeModule === "dating" && <DatingModule />}
             {activeModule === "profile" && <ProfileModule />}
           </div>
